@@ -21,26 +21,26 @@ class SingleModel(BaseModel):
         return 'SingleGANModel'
 
     def initialize(self, opt):
-        BaseModel.initialize(self, opt)
+        BaseModel.initialize(self, opt)# Just sets 4 minor stuff
 
-        nb = opt.batchSize
-        size = opt.fineSize
+        nb = opt.batchSize# BatchSize of 32 is used.
+        size = opt.fineSize# I dont know what is fineSize supposed to represent
         self.opt = opt
-        self.input_A = self.Tensor(nb, opt.input_nc, size, size)
-        self.input_B = self.Tensor(nb, opt.output_nc, size, size)
-        self.input_img = self.Tensor(nb, opt.input_nc, size, size)
-        self.input_A_gray = self.Tensor(nb, 1, size, size)
+        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#What is A and B?--> The number of colour channels  ... We are basically creating a tensor of 32 colour images with size fineSize x fineSize
+        self.input_B = self.Tensor(nb, opt.output_nc, size, size) # Same as above but now for storing output
+        self.input_img = self.Tensor(nb, opt.input_nc, size, size) # What does all of this actually mean?
+        self.input_A_gray = self.Tensor(nb, 1, size, size) # this is for the attention map
 
-        if opt.vgg > 0:
+        if opt.vgg > 0: # We are using this!
             self.vgg_loss = networks.PerceptualLoss(opt)
-            if self.opt.IN_vgg:
+            if self.opt.IN_vgg:#Not applicable to us
                 self.vgg_patch_loss = networks.PerceptualLoss(opt)
                 self.vgg_patch_loss.cuda()
-            self.vgg_loss.cuda()
-            self.vgg = networks.load_vgg16("./model", self.gpu_ids)
-            self.vgg.eval()
+            self.vgg_loss.cuda()#--> moves the variable to the GPU
+            self.vgg = networks.load_vgg16("./model", self.gpu_ids) #Actually load the VGG model(THIS IS CRUCIAL!)... This is the weights that we had to manually add
+            self.vgg.eval() #self.vgg is actually a model now. We call eval() when some layers within the self.vgg network behave differently during training and testing
             for param in self.vgg.parameters():
-                param.requires_grad = False
+                param.requires_grad = False# Verified! We not affecting the gradient here!
         elif opt.fcn > 0:
             self.fcn_loss = networks.SemanticLoss(opt)
             self.fcn_loss.cuda()
@@ -52,21 +52,21 @@ class SingleModel(BaseModel):
         # The naming conversion is different from those used in the paper
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
-        skip = True if opt.skip > 0 else False
-        self.netG_A = networks.define_G(opt.input_nc, opt.output_nc,
-                                        opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids, skip=skip, opt=opt)
-        # self.netG_B = networks.define_G(opt.output_nc, opt.input_nc,
-        #                                 opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids, skip=False, opt=opt)
 
-        if self.isTrain:
+
+                                                                                                   #False! (Check how this is handled on the other side) --> in totality, we dont use dropout!
+                                                                                                   #ngf is the depth of the feature maps propagated through the generator. ndf is the depth of the featue maps propagrated through the discriminator( Check howis this of importance!)
+        skip = True if opt.skip > 0 else False#For below: define_G(3,3,64,sid_unet_resize,instance,not 1=0,..........)
+        self.netG_A = networks.define_G(opt.input_nc, opt.output_nc,opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids, skip=skip, opt=opt)
+        #It looks like they are handling each sub-network as an attribute of 'self'.
+        if self.isTrain: #We have this
             use_sigmoid = opt.no_lsgan
-            self.netD_A = networks.define_D(opt.output_nc, opt.ndf,
-                                            opt.which_model_netD,
-                                            opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids, False)
+            #Below is the global discriminator
+            self.netD_A = networks.define_D(opt.output_nc, opt.ndf,opt.which_model_netD, opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids, False)
             if self.opt.patchD:
-                self.netD_P = networks.define_D(opt.input_nc, opt.ndf,
-                                            opt.which_model_netD,
-                                            opt.n_layers_patchD, opt.norm, use_sigmoid, self.gpu_ids, True)
+                #This is the local 'patch' based discriminator
+                self.netD_P = networks.define_D(opt.input_nc, opt.ndf,opt.which_model_netD,opt.n_layers_patchD, opt.norm, use_sigmoid, self.gpu_ids, True)
+                #3,64,no_norm_4,5,'instance',False,..... Last parameter specifies if its patch based)--> But on the other side, the patch is not accounted for...
         if not self.isTrain or opt.continue_train:
             which_epoch = opt.which_epoch
             self.load_network(self.netG_A, 'G_A', which_epoch)
@@ -79,24 +79,23 @@ class SingleModel(BaseModel):
         if self.isTrain:
             self.old_lr = opt.lr
             # self.fake_A_pool = ImagePool(opt.pool_size)
-            self.fake_B_pool = ImagePool(opt.pool_size)
+            self.fake_B_pool = ImagePool(opt.pool_size)# This is just an initializer. sets the number of images in the pool to 0 and create a list for storing the images
             # define loss functions
             if opt.use_wgan:
                 self.criterionGAN = networks.DiscLossWGANGP()
             else:
-                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
+                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)#We use this!
             if opt.use_mse:
-                self.criterionCycle = torch.nn.MSELoss()
+                self.criterionCycle = torch.nn.MSELoss()#We dont use this surprisingly...
             else:
                 self.criterionCycle = torch.nn.L1Loss()
-            self.criterionL1 = torch.nn.L1Loss()
+            self.criterionL1 = torch.nn.L1Loss()#what are these 2 attributes for? Trace independently
             self.criterionIdt = torch.nn.L1Loss()
             # initialize optimizers
-            self.optimizer_G = torch.optim.Adam(self.netG_A.parameters(),
-                                                lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_G = torch.optim.Adam(self.netG_A.parameters(),lr=opt.lr, betas=(opt.beta1, 0.999))#Generator - must should still reflect that its trained through the discriminator. Investigate
+            self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))#Global Discriminator
             if self.opt.patchD:
-                self.optimizer_D_P = torch.optim.Adam(self.netD_P.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+                self.optimizer_D_P = torch.optim.Adam(self.netD_P.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))# Local Discriminator
 
         print('---------- Networks initialized -------------')
         networks.print_network(self.netG_A)
@@ -107,7 +106,7 @@ class SingleModel(BaseModel):
                 networks.print_network(self.netD_P)
             # networks.print_network(self.netD_B)
         if opt.isTrain:
-            self.netG_A.train()
+            self.netG_A.train()# Make the generator trainable (this should be reflecting the compound network)... True Meaning: Its because of the layers that behave differently when training and testing(batch, dropout,etc)
             # self.netG_B.train()
         else:
             self.netG_A.eval()
@@ -126,7 +125,7 @@ class SingleModel(BaseModel):
         self.input_img.resize_(input_img.size()).copy_(input_img)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
-    
+
 
 
     def test(self):
@@ -188,7 +187,7 @@ class SingleModel(BaseModel):
         if self.opt.use_wgan:
             loss_D_real = pred_real.mean()
             loss_D_fake = pred_fake.mean()
-            loss_D = loss_D_fake - loss_D_real + self.criterionGAN.calc_gradient_penalty(netD, 
+            loss_D = loss_D_fake - loss_D_real + self.criterionGAN.calc_gradient_penalty(netD,
                                                 real.data, fake.data)
         elif self.opt.use_ragan and use_ragan:
             loss_D = (self.criterionGAN(pred_real - torch.mean(pred_fake), True) +
@@ -205,7 +204,7 @@ class SingleModel(BaseModel):
         fake_B = self.fake_B
         self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B, True)
         self.loss_D_A.backward()
-    
+
     def backward_D_P(self):
         if self.opt.hybrid_loss:
             loss_D_P = self.backward_D_basic(self.netD_P, self.real_patch, self.fake_patch, False)
@@ -290,10 +289,10 @@ class SingleModel(BaseModel):
 
             self.loss_G_A = (self.criterionGAN(pred_real - torch.mean(pred_fake), False) +
                                       self.criterionGAN(pred_fake - torch.mean(pred_real), True)) / 2
-            
+
         else:
             self.loss_G_A = self.criterionGAN(pred_fake, True)
-        
+
         loss_G_A = 0
         if self.opt.patchD:
             pred_fake_patch = self.netD_P.forward(self.fake_patch)
@@ -301,20 +300,20 @@ class SingleModel(BaseModel):
                 loss_G_A += self.criterionGAN(pred_fake_patch, True)
             else:
                 pred_real_patch = self.netD_P.forward(self.real_patch)
-                
+
                 loss_G_A += (self.criterionGAN(pred_real_patch - torch.mean(pred_fake_patch), False) +
                                       self.criterionGAN(pred_fake_patch - torch.mean(pred_real_patch), True)) / 2
-        if self.opt.patchD_3 > 0:   
+        if self.opt.patchD_3 > 0:
             for i in range(self.opt.patchD_3):
                 pred_fake_patch_1 = self.netD_P.forward(self.fake_patch_1[i])
                 if self.opt.hybrid_loss:
                     loss_G_A += self.criterionGAN(pred_fake_patch_1, True)
                 else:
                     pred_real_patch_1 = self.netD_P.forward(self.real_patch_1[i])
-                    
+
                     loss_G_A += (self.criterionGAN(pred_real_patch_1 - torch.mean(pred_fake_patch_1), False) +
                                         self.criterionGAN(pred_fake_patch_1 - torch.mean(pred_real_patch_1), True)) / 2
-                    
+
             if not self.opt.D_P_times2:
                 self.loss_G_A += loss_G_A/float(self.opt.patchD_3 + 1)
             else:
@@ -324,42 +323,42 @@ class SingleModel(BaseModel):
                 self.loss_G_A += loss_G_A
             else:
                 self.loss_G_A += loss_G_A*2
-                
+
         if epoch < 0:
             vgg_w = 0
         else:
             vgg_w = 1
         if self.opt.vgg > 0:
-            self.loss_vgg_b = self.vgg_loss.compute_vgg_loss(self.vgg, 
+            self.loss_vgg_b = self.vgg_loss.compute_vgg_loss(self.vgg,
                     self.fake_B, self.real_A) * self.opt.vgg if self.opt.vgg > 0 else 0
             if self.opt.patch_vgg:
                 if not self.opt.IN_vgg:
-                    loss_vgg_patch = self.vgg_loss.compute_vgg_loss(self.vgg, 
+                    loss_vgg_patch = self.vgg_loss.compute_vgg_loss(self.vgg,
                     self.fake_patch, self.input_patch) * self.opt.vgg
                 else:
-                    loss_vgg_patch = self.vgg_patch_loss.compute_vgg_loss(self.vgg, 
+                    loss_vgg_patch = self.vgg_patch_loss.compute_vgg_loss(self.vgg,
                     self.fake_patch, self.input_patch) * self.opt.vgg
                 if self.opt.patchD_3 > 0:
                     for i in range(self.opt.patchD_3):
                         if not self.opt.IN_vgg:
-                            loss_vgg_patch += self.vgg_loss.compute_vgg_loss(self.vgg, 
+                            loss_vgg_patch += self.vgg_loss.compute_vgg_loss(self.vgg,
                                 self.fake_patch_1[i], self.input_patch_1[i]) * self.opt.vgg
                         else:
-                            loss_vgg_patch += self.vgg_patch_loss.compute_vgg_loss(self.vgg, 
+                            loss_vgg_patch += self.vgg_patch_loss.compute_vgg_loss(self.vgg,
                                 self.fake_patch_1[i], self.input_patch_1[i]) * self.opt.vgg
                     self.loss_vgg_b += loss_vgg_patch/float(self.opt.patchD_3 + 1)
                 else:
                     self.loss_vgg_b += loss_vgg_patch
             self.loss_G = self.loss_G_A + self.loss_vgg_b*vgg_w
         elif self.opt.fcn > 0:
-            self.loss_fcn_b = self.fcn_loss.compute_fcn_loss(self.fcn, 
+            self.loss_fcn_b = self.fcn_loss.compute_fcn_loss(self.fcn,
                     self.fake_B, self.real_A) * self.opt.fcn if self.opt.fcn > 0 else 0
             if self.opt.patchD:
-                loss_fcn_patch = self.fcn_loss.compute_vgg_loss(self.fcn, 
+                loss_fcn_patch = self.fcn_loss.compute_vgg_loss(self.fcn,
                     self.fake_patch, self.input_patch) * self.opt.fcn
                 if self.opt.patchD_3 > 0:
                     for i in range(self.opt.patchD_3):
-                        loss_fcn_patch += self.fcn_loss.compute_vgg_loss(self.fcn, 
+                        loss_fcn_patch += self.fcn_loss.compute_vgg_loss(self.fcn,
                             self.fake_patch_1[i], self.input_patch_1[i]) * self.opt.fcn
                     self.loss_fcn_b += loss_fcn_patch/float(self.opt.patchD_3 + 1)
                 else:
@@ -368,27 +367,6 @@ class SingleModel(BaseModel):
         # self.loss_G = self.L1_AB + self.L1_BA
         self.loss_G.backward()
 
-
-    # def optimize_parameters(self, epoch):
-    #     # forward
-    #     self.forward()
-    #     # G_A and G_B
-    #     self.optimizer_G.zero_grad()
-    #     self.backward_G(epoch)
-    #     self.optimizer_G.step()
-    #     # D_A
-    #     self.optimizer_D_A.zero_grad()
-    #     self.backward_D_A()
-    #     self.optimizer_D_A.step()
-    #     if self.opt.patchD:
-    #         self.forward()
-    #         self.optimizer_D_P.zero_grad()
-    #         self.backward_D_P()
-    #         self.optimizer_D_P.step()
-        # D_B
-        # self.optimizer_D_B.zero_grad()
-        # self.backward_D_B()
-        # self.optimizer_D_B.step()
     def optimize_parameters(self, epoch):
         # forward
         self.forward()
@@ -419,7 +397,7 @@ class SingleModel(BaseModel):
         elif self.opt.fcn > 0:
             fcn = self.loss_fcn_b.data[0]/self.opt.fcn if self.opt.fcn > 0 else 0
             return OrderedDict([('D_A', D_A), ('G_A', G_A), ("fcn", fcn), ("D_P", D_P)])
-        
+
 
     def get_current_visuals(self):
         real_A = util.tensor2im(self.real_A.data)
@@ -478,7 +456,7 @@ class SingleModel(BaseModel):
         # self.save_network(self.netD_B, 'D_B', label, self.gpu_ids)
 
     def update_learning_rate(self):
-        
+
         if self.opt.new_lr:
             lr = self.old_lr/2
         else:
