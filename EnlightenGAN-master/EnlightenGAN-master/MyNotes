@@ -1,0 +1,59 @@
+The default does account for self-attention and vgg
+The single model is used
+which_model_netG sid_unet_resize
+which_model_netD no_norm_4
+--patchD should be the local discriminator
+
+Check what does the following do:
+(I thought that the PatchGAn is standardized to 3 layers?)
+--patchD
+--patch_vgg
+--patchD_3 5
+--n_layers_D 5
+--n_layers_patchD 4
+
+My understanding of EGAN is slightly flawed. I thought EGAN primarily uses instance normalization which isnt the case.
+Instead, it primarily uses batch norm but uses instance norm before the VGG for stability
+
+The 0/1 seem to be boolean values
+They use a patch size of 32 for the local discriminator
+Skip connections are being used (But investigate how)
+
+Check why no dropout? Seems to contradict MLM but outs is an attention-guided U-net generator
+They are not using tanh for the output layer of the generator
+
+The training uses the 'single model' . I need to train this model and analysis the results achieved
+Just creating the model itself takes 5 minutes for some reason
+__init__ isnt always necessary when working with classes. We only need it if we need every newly created instance of the class to
+be set to some specifies values. We see that SingleModel does not how __init__ which is fine!
+
+We are not using fcn!
+There pretrained model that they provide is trained for 200 epochs
+What is fineSize?
+It seems more promising now that the configuration that they provide coincides with the provided pre-trained network.
+
+I see that they include the instance normalization setting in the PerceptualLoss function
+
+The type of Generator we using is: sid_unet_resize
+Check what size images we are working with. The paper and dataset reflects 600x400 but the processing seems to account for 320x320
+
+I see that they are using maxpooling, I should see if I can instead use the transpose_conv to down sample(This move is backed by Radford)
+
+For our implementation, each block is: Conv->L_Relu->Batch->Conv->L_Relu->Batch (Followed by maxpooling)
+
+Find out the following: Its usually Conv->Batch-> Relu but here its Conv-> Relu->Batch. Answer! MLM states that this is not an issue. Org. paper has it like normal but experimentation revealed that better perf.
+is achieved if placed after the activation layer. If possible, try to test both!
+
+Check where is the attention map( input to the network)  actually specified?
+Check the resizing story and /or how the size correlates with the 600x400 input images?
+
+For my own understanding, check how does the number of filters in a layer (and for BN) as we progress through the network. What effect does it have to the size( ie. what happens to the size of the rceptive field
+when the number of filters increases.) THIS HAS BEEN A PERSISTENT CONFUSION FOR A WHILE!
+
+Its a slight trick that we specify a notmalization type when creating the generator but for our specified type, we dont need it. Same applies for the discriminator
+As expected, they use a kernel size of for in the discriminator.
+The discriminator is built algorithmically by defining a batch and using it as many times that is specified(n_layers_D)
+
+They are not appending a sigmoid layer to the end of the discriminator?
+
+I dont know what is there A and B notation for... Fake pool_b

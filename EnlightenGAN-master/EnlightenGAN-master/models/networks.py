@@ -14,7 +14,7 @@ from lib.nn import SynchronizedBatchNorm2d as SynBN2d
 ###############################################################################
 
 def pad_tensor(input):
-    
+
     height_org, width_org = input.shape[2], input.shape[3]
     divide = 16
 
@@ -105,7 +105,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
         netG = DnCNN(opt, depth=17, n_channels=64, image_channels=1, use_bnorm=True, kernel_size=3)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
-    if len(gpu_ids) >= 0:
+    if len(gpu_ids) > 0:
         netG.cuda(device=gpu_ids[0])
         netG = torch.nn.DataParallel(netG, gpu_ids)
     netG.apply(weights_init)
@@ -198,19 +198,19 @@ class GANLoss(nn.Module):
 class DiscLossWGANGP():
     def __init__(self):
         self.LAMBDA = 10
-        
+
     def name(self):
         return 'DiscLossWGAN-GP'
 
     def initialize(self, opt, tensor):
         # DiscLossLS.initialize(self, opt, tensor)
         self.LAMBDA = 10
-        
+
     # def get_g_loss(self, net, realA, fakeB):
     #     # First, G(A) should fake the discriminator
     #     self.D_fake = net.forward(fakeB)
     #     return -self.D_fake.mean()
-        
+
     def calc_gradient_penalty(self, netD, real_data, fake_data):
         alpha = torch.rand(1, 1)
         alpha = alpha.expand(real_data.size())
@@ -220,7 +220,7 @@ class DiscLossWGANGP():
 
         interpolates = interpolates.cuda()
         interpolates = Variable(interpolates, requires_grad=True)
-        
+
         disc_interpolates = netD.forward(interpolates)
 
         gradients = torch.autograd.grad(outputs=disc_interpolates, inputs=interpolates,
@@ -344,7 +344,7 @@ class UnetGenerator(nn.Module):
         unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, unet_block, norm_layer=norm_layer, opt=opt)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, unet_block, norm_layer=norm_layer, opt=opt)
         unet_block = UnetSkipConnectionBlock(output_nc, ngf, unet_block, outermost=True, norm_layer=norm_layer, opt=opt)
-        
+
         if skip == True:
             skipmodule = SkipModule(unet_block, opt)
             self.model = skipmodule
@@ -591,25 +591,25 @@ class FCDiscriminator(nn.Module):
         return output
 
 
-class Unet_resize_conv(nn.Module):
+class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used because dropout cannot be used with BatchNorm
     def __init__(self, opt, skip):
         super(Unet_resize_conv, self).__init__()
 
         self.opt = opt
         self.skip = skip
-        p = 1
-        # self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
-        if opt.self_attention:
+        p = 1# This is the size of the padding
+
+        if opt.self_attention:# We have this option
             self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
-            # self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
-            self.downsample_1 = nn.MaxPool2d(2)
+            self.downsample_1 = nn.MaxPool2d(2)# Why so many?
             self.downsample_2 = nn.MaxPool2d(2)
             self.downsample_3 = nn.MaxPool2d(2)
             self.downsample_4 = nn.MaxPool2d(2)
         else:
             self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
+
         self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
-        if self.opt.use_norm == 1:
+        if self.opt.use_norm == 1:# We have this option... For us, syn_norm=False...SynBN2d is SynchronizedBatchNorm2d... We just stick to normal BatchNorm2d(32)<-- This 32 is verified in the paper
             self.bn1_1 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
@@ -656,9 +656,11 @@ class Unet_resize_conv(nn.Module):
         if self.opt.use_norm == 1:
             self.bn5_2 = SynBN2d(512) if self.opt.syn_norm else nn.BatchNorm2d(512)
 
-        # self.deconv5 = nn.ConvTranspose2d(512, 256, 2, stride=2)
-        self.deconv5 = nn.Conv2d(512, 256, 3, padding=p)
-        self.conv6_1 = nn.Conv2d(512, 256, 3, padding=p)
+
+        #The bottleneck has been reached, we now enter the decoder. We need to now upsample to produce the sample.
+        # self.deconv5 = nn.ConvTranspose2d(512, 256, 2, stride=2)# IT SEEMS THAT THEY ALREADY ATTEMPTED WHAT I WANTED TO DO( USE THE TRANSPOSE CONV LAYER TO UPSAMPLE)
+        self.deconv5 = nn.Conv2d(512, 256, 3, padding=p)#This is apparently referred to as a bilinear upsampling layer.(According to the paper). This apparently gets rid of checkerboard effects
+        self.conv6_1 = nn.Conv2d(512, 256, 3, padding=p)# Try to get an intuition of how the no. of filters,kernel_size and strides are configured to achieve different characteristics
         self.LReLU6_1 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
             self.bn6_1 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
@@ -700,7 +702,7 @@ class Unet_resize_conv(nn.Module):
 
         self.conv10 = nn.Conv2d(32, 3, 1)
         if self.opt.tanh:
-            self.tanh = nn.Tanh()
+            self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
 
     def depth_to_space(self, input, block_size):
         block_size_sq = block_size*block_size
@@ -755,7 +757,7 @@ class Unet_resize_conv(nn.Module):
             x = self.bn5_1(self.LReLU5_1(self.conv5_1(x)))
             x = x*gray_5 if self.opt.self_attention else x
             conv5 = self.bn5_2(self.LReLU5_2(self.conv5_2(x)))
-            
+
             conv5 = F.upsample(conv5, scale_factor=2, mode='bilinear')
             conv4 = conv4*gray_4 if self.opt.self_attention else conv4
             up6 = torch.cat([self.deconv5(conv5), conv4], 1)
@@ -808,8 +810,8 @@ class Unet_resize_conv(nn.Module):
 
             if self.opt.linear:
                 output = output/torch.max(torch.abs(output))
-            
-                
+
+
         elif self.opt.use_norm == 0:
             if self.opt.self_attention:
                 x = self.LReLU1_1(self.conv1_1(torch.cat((input, gray), 1)))
@@ -859,7 +861,7 @@ class Unet_resize_conv(nn.Module):
             conv9 = self.LReLU9_2(self.conv9_2(x))
 
             latent = self.conv10(conv9)
-            
+
             if self.opt.times_residual:
                 latent = latent*gray
 
@@ -885,7 +887,7 @@ class Unet_resize_conv(nn.Module):
 
             if self.opt.linear:
                 output = output/torch.max(torch.abs(output))
-        
+
         output = pad_tensor_back(output, pad_left, pad_right, pad_top, pad_bottom)
         latent = pad_tensor_back(latent, pad_left, pad_right, pad_top, pad_bottom)
         gray = pad_tensor_back(gray, pad_left, pad_right, pad_top, pad_bottom)
@@ -980,10 +982,10 @@ class Vgg16(nn.Module):
         if opt.vgg_choose != "no_maxpool":
             if opt.vgg_maxpooling:
                 h = F.max_pool2d(h, kernel_size=2, stride=2)
-        
+
         relu5_1 = F.relu(self.conv5_1(h), inplace=True)
         relu5_2 = F.relu(self.conv5_2(relu5_1), inplace=True)
-        conv5_3 = self.conv5_3(relu5_2) 
+        conv5_3 = self.conv5_3(relu5_2)
         h = F.relu(conv5_3, inplace=True)
         relu5_3 = h
         if opt.vgg_choose == "conv4_3":
@@ -1020,7 +1022,7 @@ class PerceptualLoss(nn.Module):
     def __init__(self, opt):
         super(PerceptualLoss, self).__init__()
         self.opt = opt
-        self.instancenorm = nn.InstanceNorm2d(512, affine=False)
+        self.instancenorm = nn.InstanceNorm2d(512, affine=False) #512 is the number of features
 
     def compute_vgg_loss(self, vgg, img, target):
         img_vgg = vgg_preprocess(img, self.opt)
