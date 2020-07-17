@@ -24,7 +24,7 @@ if opt.train:
 		--fineSize 320 \
         --patchSize 32 \
 		--skip 1 \
-		--batchSize 32 \
+		--batchSize 16 \
         --self_attention \
 		--use_norm 1 \
 		--use_wgan 0 \
@@ -34,7 +34,7 @@ if opt.train:
 		--instance_norm 0 \
 		--vgg 1 \
         --vgg_choose relu5_1 \
-		--gpu_ids 0,1,2 \
+		--gpu_ids 0 \
 		--display_port=" + opt.port)
 
 elif opt.predict:
