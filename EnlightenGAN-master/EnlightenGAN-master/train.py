@@ -26,9 +26,10 @@ model = create_model(opt)
 total_steps = 0
 # Below is the big deal!!! range(1,100+100+1)
 for epoch in range(1, opt.niter + opt.niter_decay + 1):
-    print("HELLO")
+    print("New Epoch +++++++++++++++++++++")
     epoch_start_time = time.time()
     for i, data in enumerate(dataset):
+        print("New Iteration -----------------")
         iter_start_time = time.time()
         total_steps += opt.batchSize
         epoch_iter = total_steps - dataset_size * (epoch - 1)
