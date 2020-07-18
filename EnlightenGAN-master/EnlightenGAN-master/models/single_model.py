@@ -23,24 +23,27 @@ class SingleModel(BaseModel):
     def initialize(self, opt):
         BaseModel.initialize(self, opt)# Just sets 4 minor stuff
 
-        nb = opt.batchSize# BatchSize of 32 is used.
-        size = opt.fineSize# I dont know what is fineSize supposed to represent
+        nb = opt.batchSize# Batch size (16)
+        size = opt.fineSize # From my understanding, the size of the input images
         self.opt = opt
-        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#What is A and B?--> The number of colour channels  ... We are basically creating a tensor of 32 colour images with size fineSize x fineSize
+        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#What is A and B?--> The number of colour channels  ... We are basically creating a tensor of 16 colour images with size fineSize x fineSize
         self.input_B = self.Tensor(nb, opt.output_nc, size, size) # Same as above but now for storing output
         self.input_img = self.Tensor(nb, opt.input_nc, size, size) # What does all of this actually mean?
-        self.input_A_gray = self.Tensor(nb, 1, size, size) # this is for the attention map
+        self.input_A_gray = self.Tensor(nb, 1, size, size) # this is for the attention maps
+		
+		#Track the above carefully
 
         if opt.vgg > 0: # We are using this!
             self.vgg_loss = networks.PerceptualLoss(opt)
             if self.opt.IN_vgg:#Not applicable to us
                 self.vgg_patch_loss = networks.PerceptualLoss(opt)
                 self.vgg_patch_loss.cuda()
-            self.vgg_loss.cuda()#--> moves the variable to the GPU
+            self.vgg_loss.cuda()#--> moves the variable to the GPU (Why is this the only thing shipped to the GPU?) -> How is it a loss?
             self.vgg = networks.load_vgg16("./model", self.gpu_ids) #Actually load the VGG model(THIS IS CRUCIAL!)... This is the weights that we had to manually add
-            self.vgg.eval() #self.vgg is actually a model now. We call eval() when some layers within the self.vgg network behave differently during training and testing
+            self.vgg.eval() # We call eval() when some layers within the self.vgg network behave differently during training and testing... This will not be trained!
+			#The eval function is often used as a pair with the requires.grad or torch.no grad functions (which makse sense)
             for param in self.vgg.parameters():
-                param.requires_grad = False# Verified! We not affecting the gradient here!
+                param.requires_grad = False# Verified! For all the weights in the VGG network, we do not want to be updating those weights, therefore, we save computation using the abvove!
         elif opt.fcn > 0:
             self.fcn_loss = networks.SemanticLoss(opt)
             self.fcn_loss.cuda()
@@ -50,27 +53,30 @@ class SingleModel(BaseModel):
                 param.requires_grad = False
         # load/define networks
         # The naming conversion is different from those used in the paper
-        # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
 
+		#G_A : Is our only generator
+		#D_A : Is the Global Discriminator
+		#D_P : Is the patch discriminator
 
-
-                                                                                                   #False! (Check how this is handled on the other side) --> in totality, we dont use dropout!
-                                                                                                   #ngf is the depth of the feature maps propagated through the generator. ndf is the depth of the featue maps propagrated through the discriminator( Check howis this of importance!)
-        skip = True if opt.skip > 0 else False#For below: define_G(3,3,64,sid_unet_resize,instance,not 1=0,..........)
+       #ngf is the number of filters in the first conv layer in the generator. ndf is the number of filters used in the first conv layer in the disc.
+        skip = True if opt.skip > 0 else False # We are using skip connections!
+		
+		#For below: define_G(3,3,64,sid_unet_resize,instance,not 1=0,..........)
         self.netG_A = networks.define_G(opt.input_nc, opt.output_nc,opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids, skip=skip, opt=opt)
         #It looks like they are handling each sub-network as an attribute of 'self'.
         if self.isTrain: #We have this
             use_sigmoid = opt.no_lsgan
             #Below is the global discriminator
+			#Below is correct that we are accepting 'output_nc' which represents a char. of the sample produced by the generator.
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf,opt.which_model_netD, opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids, False)
+			#3,64, no_norm_4,5,instance,false,0,false
             if self.opt.patchD:
                 #This is the local 'patch' based discriminator
                 self.netD_P = networks.define_D(opt.input_nc, opt.ndf,opt.which_model_netD,opt.n_layers_patchD, opt.norm, use_sigmoid, self.gpu_ids, True)
-                #3,64,no_norm_4,5,'instance',False,..... Last parameter specifies if its patch based)--> But on the other side, the patch is not accounted for...
+                #3,64,no_norm_4,4,'instance',False,..... Last parameter specifies if its patch based)--> But on the other side, the patch is not accounted for...
         if not self.isTrain or opt.continue_train:
             which_epoch = opt.which_epoch
             self.load_network(self.netG_A, 'G_A', which_epoch)
-            # self.load_network(self.netG_B, 'G_B', which_epoch)
             if self.isTrain:
                 self.load_network(self.netD_A, 'D_A', which_epoch)
                 if self.opt.patchD:
@@ -79,16 +85,16 @@ class SingleModel(BaseModel):
         if self.isTrain:
             self.old_lr = opt.lr
             # self.fake_A_pool = ImagePool(opt.pool_size)
-            self.fake_B_pool = ImagePool(opt.pool_size)# This is just an initializer. sets the number of images in the pool to 0 and create a list for storing the images
+            self.fake_B_pool = ImagePool(opt.pool_size)# This is just an initializer. sets the number of images in the pool to 50 and create a list for storing the images
             # define loss functions
             if opt.use_wgan:
                 self.criterionGAN = networks.DiscLossWGANGP()
             else:
-                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)#We use this!
+                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)#We use this! We use LSGAN
             if opt.use_mse:
                 self.criterionCycle = torch.nn.MSELoss()#We dont use this surprisingly...
             else:
-                self.criterionCycle = torch.nn.L1Loss()
+                self.criterionCycle = torch.nn.L1Loss() # We are using L1 loss!?????
             self.criterionL1 = torch.nn.L1Loss()#what are these 2 attributes for? Trace independently
             self.criterionIdt = torch.nn.L1Loss()
             # initialize optimizers
@@ -99,24 +105,23 @@ class SingleModel(BaseModel):
 
         print('---------- Networks initialized -------------')
         networks.print_network(self.netG_A)
-        # networks.print_network(self.netG_B)
         if self.isTrain:
             networks.print_network(self.netD_A)
             if self.opt.patchD:
                 networks.print_network(self.netD_P)
-            # networks.print_network(self.netD_B)
         if opt.isTrain:
-            self.netG_A.train()# Make the generator trainable (this should be reflecting the compound network)... True Meaning: Its because of the layers that behave differently when training and testing(batch, dropout,etc)
-            # self.netG_B.train()
+            self.netG_A.train()# Make the generator trainable. The gradients are volatile! Its by default trainable but maybe this is just to make sure.
         else:
             self.netG_A.eval()
-            # self.netG_B.eval()
         print('-----------------------------------------------')
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
         input_A = input['A' if AtoB else 'B']
-        input_B = input['B' if AtoB else 'A']
+		print(len(input_A))
+		print(input_A)
+
+		input_B = input['B' if AtoB else 'A']
         input_img = input['input_img']
         input_A_gray = input['A_gray']
         self.input_A.resize_(input_A.size()).copy_(input_A)
@@ -124,27 +129,6 @@ class SingleModel(BaseModel):
         self.input_B.resize_(input_B.size()).copy_(input_B)
         self.input_img.resize_(input_img.size()).copy_(input_img)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
-
-
-
-
-    def test(self):
-        self.real_A = Variable(self.input_A, volatile=True)
-        self.real_A_gray = Variable(self.input_A_gray, volatile=True)
-        if self.opt.noise > 0:
-            self.noise = Variable(torch.cuda.FloatTensor(self.real_A.size()).normal_(mean=0, std=self.opt.noise/255.))
-            self.real_A = self.real_A + self.noise
-        if self.opt.input_linear:
-            self.real_A = (self.real_A - torch.min(self.real_A))/(torch.max(self.real_A) - torch.min(self.real_A))
-        # print(np.transpose(self.real_A.data[0].cpu().float().numpy(),(1,2,0))[:2][:2][:])
-        if self.opt.skip == 1:
-            self.fake_B, self.latent_real_A = self.netG_A.forward(self.real_A, self.real_A_gray)
-        else:
-            self.fake_B = self.netG_A.forward(self.real_A, self.real_A_gray)
-        # self.rec_A = self.netG_B.forward(self.fake_B)
-
-        self.real_B = Variable(self.input_B, volatile=True)
-
 
     def predict(self):
         self.real_A = Variable(self.input_A, volatile=True)
@@ -159,21 +143,10 @@ class SingleModel(BaseModel):
             self.fake_B, self.latent_real_A = self.netG_A.forward(self.real_A, self.real_A_gray)
         else:
             self.fake_B = self.netG_A.forward(self.real_A, self.real_A_gray)
-        # self.rec_A = self.netG_B.forward(self.fake_B)
 
         real_A = util.tensor2im(self.real_A.data)
         fake_B = util.tensor2im(self.fake_B.data)
         A_gray = util.atten2im(self.real_A_gray.data)
-        # rec_A = util.tensor2im(self.rec_A.data)
-        # if self.opt.skip == 1:
-        #     latent_real_A = util.tensor2im(self.latent_real_A.data)
-        #     latent_show = util.latent2im(self.latent_real_A.data)
-        #     max_image = util.max2im(self.fake_B.data, self.latent_real_A.data)
-        #     return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('latent_real_A', latent_real_A),
-        #                     ('latent_show', latent_show), ('max_image', max_image), ('A_gray', A_gray)])
-        # else:
-        #     return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
-        # return OrderedDict([('fake_B', fake_B)])
         return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
 
     # get image paths
@@ -226,9 +199,7 @@ class SingleModel(BaseModel):
             self.loss_D_P = self.loss_D_P*2
         self.loss_D_P.backward()
 
-    # def backward_D_B(self):
-    #     fake_A = self.fake_A_pool.query(self.fake_A)
-    #     self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+  
     def forward(self):
         self.real_A = Variable(self.input_A)
         self.real_B = Variable(self.input_B)
@@ -271,14 +242,6 @@ class SingleModel(BaseModel):
                 self.input_patch_1.append(self.real_A[:,:, h_offset_1:h_offset_1 + self.opt.patchSize,
                     w_offset_1:w_offset_1 + self.opt.patchSize])
 
-            # w_offset_2 = random.randint(0, max(0, w - self.opt.patchSize - 1))
-            # h_offset_2 = random.randint(0, max(0, h - self.opt.patchSize - 1))
-            # self.fake_patch_2 = self.fake_B[:,:, h_offset_2:h_offset_2 + self.opt.patchSize,
-            #        w_offset_2:w_offset_2 + self.opt.patchSize]
-            # self.real_patch_2 = self.real_B[:,:, h_offset_2:h_offset_2 + self.opt.patchSize,
-            #        w_offset_2:w_offset_2 + self.opt.patchSize]
-            # self.input_patch_2 = self.real_A[:,:, h_offset_2:h_offset_2 + self.opt.patchSize,
-            #        w_offset_2:w_offset_2 + self.opt.patchSize]
 
     def backward_G(self, epoch):
         pred_fake = self.netD_A.forward(self.fake_B)
@@ -367,7 +330,7 @@ class SingleModel(BaseModel):
         # self.loss_G = self.L1_AB + self.L1_BA
         self.loss_G.backward()
 
-    def optimize_parameters(self, epoch):
+    def optimize_parameters(self, epoch): #Do the forward,backprop and update the weights... this is a very powerful and abstracted function
         # forward
         self.forward()
         # G_A and G_B
@@ -452,8 +415,6 @@ class SingleModel(BaseModel):
         self.save_network(self.netD_A, 'D_A', label, self.gpu_ids)
         if self.opt.patchD:
             self.save_network(self.netD_P, 'D_P', label, self.gpu_ids)
-        # self.save_network(self.netG_B, 'G_B', label, self.gpu_ids)
-        # self.save_network(self.netD_B, 'D_B', label, self.gpu_ids)
 
     def update_learning_rate(self):
 

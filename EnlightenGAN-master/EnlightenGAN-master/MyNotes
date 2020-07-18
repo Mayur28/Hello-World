@@ -50,10 +50,37 @@ Check the resizing story and /or how the size correlates with the 600x400 input 
 For my own understanding, check how does the number of filters in a layer (and for BN) as we progress through the network. What effect does it have to the size( ie. what happens to the size of the rceptive field
 when the number of filters increases.) THIS HAS BEEN A PERSISTENT CONFUSION FOR A WHILE!
 
-Its a slight trick that we specify a notmalization type when creating the generator but for our specified type, we dont need it. Same applies for the discriminator
+Its a slight trick that we specify a normalization type when creating the generator but for our specified type, we dont need it. Same applies for the discriminator
 As expected, they use a kernel size of for in the discriminator.
 The discriminator is built algorithmically by defining a batch and using it as many times that is specified(n_layers_D)
 
 They are not appending a sigmoid layer to the end of the discriminator?
 
 I dont know what is there A and B notation for... Fake pool_b
+
+Check where does the skip connections fit in?
+There is a calculation associated with the self-attention map
+
+They scale the images to 286 (loadSize) but why do they crop the image to 256. I should try this, scale to small,do whatever, then scale up
+
+Check where is 'which_direction' used
+
+I can used visdom (on Windows) using the linux shell without nohup!
+visdom just displays the images, not the graphs, I should try the graphs
+Get a brand new baby version of visdom to work, and take it from there! (the html must be extracted from drive)
+fineSize is the official size of the images that we work with
+
+I think that A represents the input and B is the output. THe first section of 'initialize' in Single model is the images that we are saving in drive
+
+The vgg loss and the actual VGG networks get shipped to the GPU
+
+They are not using sigmoid in the discriminator???
+
+Look thoroughly into the generator/ discriminator structure and the GAN Loss
+
+The losses used are deceiving --> Look into the criterion stuff in single_model
+For some reason, we dont ever set the discriminators to trainable?
+
+The dataloader loads the data into batches ( and pretty much handles all the data handling) by using the GPU. LOOK INTO THE DATALOADER STUFF THOROUGHLY!! To use the dataloader stuff, it is compulsory to implement the __getitem__ and __len__ magic functions
+
+The 'data' training loop is a dictionary where each element is a tensor (with dimensions 16x3xsizexsize). These tensors represent A,B,input_A_gray and input_imgs. It also stores 'A_paths' which is the path to the training images accessed in that batch.
