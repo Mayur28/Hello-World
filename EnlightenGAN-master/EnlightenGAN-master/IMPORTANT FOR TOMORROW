@@ -1,0 +1,13 @@
+Tomorrow: Experiment with visdom from first principles
+Use the new commans in the notebook and use original training Code
+In scripts, change the default port to 6006
+Change the port number in nohup
+Make sure my version of save models remains ( loading into google drive)
+Try to direct the visdom stuff via drive!
+Look for the checkpoint parameter stuff and sort out the web directory as well.
+DONT PRINT, IT MAKES A HUGE DIFFERENCE
+GET VISDOM TO WORK FOR GOODNESS SAKE!!!
+
+Where dos the perceptual loss fit in
+How are the losses of the generator and discriminator sets
+Where/ how do we extract the attention map?
