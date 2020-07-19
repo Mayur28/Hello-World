@@ -70,44 +70,41 @@ class UnalignedDataset(BaseDataset):
         
         self.transform = get_transform(opt)#flipping,scaling and cropping the images
 
-    def __getitem__(self, index):
-		print("This is in the __get_item__ function of UnalignedDataset")
-		
+    def __getitem__(self, index):# Each image in the batch will do this
         A_img = self.A_imgs[index % self.A_size]
         B_img = self.B_imgs[index % self.B_size]
         A_path = self.A_paths[index % self.A_size]
         B_path = self.B_paths[index % self.B_size]
-        A_img = self.transform(A_img)
+        A_img = self.transform(A_img) #This is where we actually perform the transformation
         B_img = self.transform(B_img)
 
-		w = A_img.size(2)
-		h = A_img.size(1)
+        w = A_img.size(2)
+        h = A_img.size(1)
 
-		if (not self.opt.no_flip) and random.random() < 0.5:
-			idx = [i for i in range(A_img.size(2) - 1, -1, -1)]
-			idx = torch.LongTensor(idx)
-			A_img = A_img.index_select(2, idx)
-			B_img = B_img.index_select(2, idx)
-		if (not self.opt.no_flip) and random.random() < 0.5:
-			idx = [i for i in range(A_img.size(1) - 1, -1, -1)]
-			idx = torch.LongTensor(idx)
-			A_img = A_img.index_select(1, idx)
-			B_img = B_img.index_select(1, idx)
-		if self.opt.vary == 1 and (not self.opt.no_flip) and random.random() < 0.5:
-			times = random.randint(self.opt.low_times,self.opt.high_times)/100.
-			input_img = (A_img+1)/2./times
-			input_img = input_img*2-1
-		else:
-			input_img = A_img
+        if (not self.opt.no_flip) and random.random() < 0.5:
+            idx = [i for i in range(A_img.size(2) - 1, -1, -1)]
+            idx = torch.LongTensor(idx)
+            A_img = A_img.index_select(2, idx)
+            B_img = B_img.index_select(2, idx)
+        if (not self.opt.no_flip) and random.random() < 0.5:
+            idx = [i for i in range(A_img.size(1) - 1, -1, -1)]
+            idx = torch.LongTensor(idx)
+            A_img = A_img.index_select(1, idx)
+            B_img = B_img.index_select(1, idx)
+        if self.opt.vary == 1 and (not self.opt.no_flip) and random.random() < 0.5:
+            times = random.randint(self.opt.low_times,self.opt.high_times)/100.
+            input_img = (A_img+1)/2./times
+            input_img = input_img*2-1
+        else:
+            input_img = A_img
 
-		#Below is the attention map calculation
-		# The weird calculations are for going from [-1,1] to [0,1]
-		r,g,b = input_img[0]+1, input_img[1]+1, input_img[2]+1
-		A_gray = 1. - (0.299*r+0.587*g+0.114*b)/2. #Verified: The weird numbers are for going from RGB to grayscale
-		A_gray = torch.unsqueeze(A_gray, 0)#Returns a new tensor with a dimension of size one inserted at the specified position.
-        return {'A': A_img, 'B': B_img, 'A_gray': A_gray, 'input_img': input_img,
-                'A_paths': A_path, 'B_paths': B_path}
-
+        #Below is the attention map calculation
+        # The weird calculations are for going from [-1,1] to [0,1]
+        r,g,b = input_img[0]+1, input_img[1]+1, input_img[2]+1
+        A_gray = 1. - (0.299*r+0.587*g+0.114*b)/2. #Verified: The weird numbers are for going from RGB to grayscale
+        A_gray = torch.unsqueeze(A_gray, 0)#Returns a new tensor with a dimension of size one inserted at the specified position.
+        return {'A': A_img, 'B': B_img, 'A_gray': A_gray, 'input_img': input_img,'A_paths': A_path, 'B_paths': B_path}
+		# The above represents a single 'data' chunk for a single iteration
     def __len__(self):
         return max(self.A_size, self.B_size)
 

@@ -98,3 +98,9 @@ Where to we use the vgg loss? It doesnt seem to be incorporated with the GAN los
 What is the folders A and B for? A is the dark and B is the light - which is the transition that we want.
 
 Why do many of the classes accept a parameter? An example being the unaligned_dataset class in unaligned_dataset.py
+
+The __getitems__ function in unaligned_dataset is called each iteration and is used to form the dictionary form of the batch with the A,B,input image and attention map!
+
+I think they are flipping some of the images for data augmentation
+
+I dont understand what are they doing for the input image???

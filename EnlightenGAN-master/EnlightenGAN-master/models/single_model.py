@@ -116,7 +116,7 @@ class SingleModel(BaseModel):
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
         input_A = input['A' if AtoB else 'B']# We can do this because it is a dictionary!
-		input_B = input['B' if AtoB else 'A']
+        input_B = input['B' if AtoB else 'A']
         input_img = input['input_img']
         input_A_gray = input['A_gray']
         self.input_A.resize_(input_A.size()).copy_(input_A)
