@@ -222,16 +222,15 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.skip = skip# Check how this is done in the forward() function. Seems pretty useless here.
         p = 1# This is the size of the padding
 
-		#Why do we start with 4? Why dont we use ngf?
-		self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
+	#Why do we start with 4? Why dont we use ngf?
+	self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
         self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
-		self.bn1_1 = nn.BatchNorm2d(32)
+	self.bn1_1 = nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn1_2 = nn.BatchNorm2d(32)
-		
+        self.bn1_2 = nn.BatchNorm2d(32)	
         self.max_pool1 =  nn.MaxPool2d(2) # Are these 2 really necessary? May have to revert! Answer: It doesnt matter: we just defining the stuff, the ordering is sorted in the forward() function
-		self.downsample_1 = nn.MaxPool2d(2)
+	self.downsample_1 = nn.MaxPool2d(2)
 
 
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=p)
@@ -242,7 +241,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.bn2_2 = nn.BatchNorm2d(64)
 		
         self.max_pool2 =  nn.MaxPool2d(2)# And here
-		self.downsample_2 = nn.MaxPool2d(2)
+	self.downsample_2 = nn.MaxPool2d(2)
 
 
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=p)
@@ -253,7 +252,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.bn3_2 = nn.BatchNorm2d(128)
 		
         self.max_pool3 = nn.MaxPool2d(2)# And here
-		self.downsample_3 = nn.MaxPool2d(2)
+	self.downsample_3 = nn.MaxPool2d(2)
 
 
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=p)
@@ -264,7 +263,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.bn4_2 = nn.BatchNorm2d(256)
 		
         self.max_pool4 = nn.MaxPool2d(2)# And here?
-		self.downsample_4 = nn.MaxPool2d(2)
+	self.downsample_4 = nn.MaxPool2d(2)
 
 
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=p)
@@ -315,7 +314,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
 
         self.conv10 = nn.Conv2d(32, 3, 1)
         if self.opt.tanh:
-            self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
+	    self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
 
     def forward(self, input, gray):
         flag = 0
