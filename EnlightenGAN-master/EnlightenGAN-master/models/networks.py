@@ -105,7 +105,7 @@ def define_D(input_nc, ndf, which_model_netD,
         assert(torch.cuda.is_available())
 
     if which_model_netD == 'no_norm_4':
-		netD = NoNormDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+	netD = NoNormDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
     
     if use_gpu:
         netD.cuda(device=gpu_ids[0]) # Jackpot, we are loading the model to the GPU
