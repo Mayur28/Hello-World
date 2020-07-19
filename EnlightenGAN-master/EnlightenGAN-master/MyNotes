@@ -104,3 +104,6 @@ The __getitems__ function in unaligned_dataset is called each iteration and is u
 I think they are flipping some of the images for data augmentation
 
 I dont understand what are they doing for the input image???
+
+I changed DataParallel because at the moment, I'm only using one GPU.This function basically chunks the input across all the GPU's (uncomment if Shun makes a plan)
+

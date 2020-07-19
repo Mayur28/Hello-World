@@ -26,7 +26,7 @@ class SingleModel(BaseModel):
         nb = opt.batchSize# Batch size (16)
         size = opt.fineSize # From my understanding, the size of the input images
         self.opt = opt
-        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#What is A and B?--> The number of colour channels  ... We are basically creating a tensor of 16 colour images with size fineSize x fineSize
+        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#We are basically creating a tensor of 16 colour images with size fineSize x fineSize
         self.input_B = self.Tensor(nb, opt.output_nc, size, size) # Same as above but now for storing output
         self.input_img = self.Tensor(nb, opt.input_nc, size, size) # What does all of this actually mean?
         self.input_A_gray = self.Tensor(nb, 1, size, size) # this is for the attention maps
@@ -35,22 +35,12 @@ class SingleModel(BaseModel):
 
         if opt.vgg > 0: # We are using this!
             self.vgg_loss = networks.PerceptualLoss(opt)
-            if self.opt.IN_vgg:#Not applicable to us
-                self.vgg_patch_loss = networks.PerceptualLoss(opt)
-                self.vgg_patch_loss.cuda()
             self.vgg_loss.cuda()#--> moves the variable to the GPU (Why is this the only thing shipped to the GPU?) -> How is it a loss?
             self.vgg = networks.load_vgg16("./model", self.gpu_ids) #Actually load the VGG model(THIS IS CRUCIAL!)... This is the weights that we had to manually add
-            self.vgg.eval() # We call eval() when some layers within the self.vgg network behave differently during training and testing... This will not be trained!
+            self.vgg.eval() # We call eval() when some layers within the self.vgg network behave differently during training and testing... This will not be trained (Its frozen!)!
 			#The eval function is often used as a pair with the requires.grad or torch.no grad functions (which makse sense)
             for param in self.vgg.parameters():
-                param.requires_grad = False# Verified! For all the weights in the VGG network, we do not want to be updating those weights, therefore, we save computation using the abvove!
-        elif opt.fcn > 0:
-            self.fcn_loss = networks.SemanticLoss(opt)
-            self.fcn_loss.cuda()
-            self.fcn = networks.load_fcn("./model")
-            self.fcn.eval()
-            for param in self.fcn.parameters():
-                param.requires_grad = False
+                param.requires_grad = False# Verified! For all the weights in the VGG network, we do not want to be updating those weights, therefore, we save computation using the above!
 
 		#G_A : Is our only generator
 		#D_A : Is the Global Discriminator
@@ -82,19 +72,13 @@ class SingleModel(BaseModel):
 
         if self.isTrain:
             self.old_lr = opt.lr
-            # self.fake_A_pool = ImagePool(opt.pool_size)
             self.fake_B_pool = ImagePool(opt.pool_size)# This is just an initializer. sets the number of images in the pool to 50 and create a list for storing the images
             # define loss functions
-            if opt.use_wgan:
-                self.criterionGAN = networks.DiscLossWGANGP()
-            else:
-                self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)#We use this! We use LSGAN
+            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor) # Read the note on the LSGAN and MSE loss!
             if opt.use_mse:
                 self.criterionCycle = torch.nn.MSELoss()#We dont use this surprisingly...
             else:
                 self.criterionCycle = torch.nn.L1Loss() # We are using L1 loss!?????
-            self.criterionL1 = torch.nn.L1Loss()#what are these 2 attributes for? Trace independently
-            self.criterionIdt = torch.nn.L1Loss()
             # initialize optimizers
             self.optimizer_G = torch.optim.Adam(self.netG_A.parameters(),lr=opt.lr, betas=(opt.beta1, 0.999))#Generator - must should still reflect that its trained through the discriminator. Investigate
             self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))#Global Discriminator
