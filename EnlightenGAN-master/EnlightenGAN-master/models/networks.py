@@ -105,7 +105,7 @@ def define_D(input_nc, ndf, which_model_netD,
         assert(torch.cuda.is_available())
 
     if which_model_netD == 'no_norm_4':
-	netD = NoNormDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+        netD = NoNormDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
     
     if use_gpu:
         netD.cuda(device=gpu_ids[0]) # Jackpot, we are loading the model to the GPU
@@ -221,16 +221,16 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.opt = opt
         self.skip = skip# Check how this is done in the forward() function. Seems pretty useless here.
         p = 1# This is the size of the padding
+        #Why do we start with 4? Why dont we use ngf?
+        self.conv1_1 = nn.Conv2d(4, 32, 3, padding = p)
 
-	#Why do we start with 4? Why dont we use ngf?
-	self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
         self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
-	self.bn1_1 = nn.BatchNorm2d(32)
+        self.bn1_1 = nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_2 = nn.BatchNorm2d(32)	
         self.max_pool1 =  nn.MaxPool2d(2) # Are these 2 really necessary? May have to revert! Answer: It doesnt matter: we just defining the stuff, the ordering is sorted in the forward() function
-	self.downsample_1 = nn.MaxPool2d(2)
+        self.downsample_1 = nn.MaxPool2d(2)
 
 
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=p)
@@ -239,9 +239,8 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.conv2_2 = nn.Conv2d(64, 64, 3, padding=p)
         self.LReLU2_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn2_2 = nn.BatchNorm2d(64)
-		
-        self.max_pool2 =  nn.MaxPool2d(2)# And here
-	self.downsample_2 = nn.MaxPool2d(2)
+        self.max_pool2 =  nn.MaxPool2d(2)
+        self.downsample_2 = nn.MaxPool2d(2)
 
 
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=p)
@@ -250,22 +249,18 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.conv3_2 = nn.Conv2d(128, 128, 3, padding=p)
         self.LReLU3_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn3_2 = nn.BatchNorm2d(128)
-		
-        self.max_pool3 = nn.MaxPool2d(2)# And here
-	self.downsample_3 = nn.MaxPool2d(2)
-
-
+        self.max_pool3 = nn.MaxPool2d(2)
+        self.downsample_3 = nn.MaxPool2d(2)
+        
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=p)
         self.LReLU4_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn4_1 = nn.BatchNorm2d(256)
         self.conv4_2 = nn.Conv2d(256, 256, 3, padding=p)
         self.LReLU4_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn4_2 = nn.BatchNorm2d(256)
-		
-        self.max_pool4 = nn.MaxPool2d(2)# And here?
-	self.downsample_4 = nn.MaxPool2d(2)
-
-
+        self.max_pool4 = nn.MaxPool2d(2)
+        self.downsample_4 = nn.MaxPool2d(2)
+        
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=p)
         self.LReLU5_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn5_1 = nn.BatchNorm2d(512)
@@ -314,7 +309,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
 
         self.conv10 = nn.Conv2d(32, 3, 1)
         if self.opt.tanh:
-	    self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
+	          self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
 
     def forward(self, input, gray):
         flag = 0
@@ -418,6 +413,80 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             return output, latent
         else:
             return output
+
+
+class Vgg16(nn.Module):
+    def __init__(self):
+        super(Vgg16, self).__init__()
+        self.conv1_1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
+        self.conv1_2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+
+        self.conv2_1 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.conv2_2 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
+
+        self.conv3_1 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+        self.conv3_3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
+
+        self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1)
+        self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+        self.conv4_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+
+        self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+        self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+
+    def forward(self, X, opt):
+        h = F.relu(self.conv1_1(X), inplace=True)
+        h = F.relu(self.conv1_2(h), inplace=True)
+        # relu1_2 = h
+        h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        h = F.relu(self.conv2_1(h), inplace=True)
+        h = F.relu(self.conv2_2(h), inplace=True)
+        # relu2_2 = h
+        h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        h = F.relu(self.conv3_1(h), inplace=True)
+        h = F.relu(self.conv3_2(h), inplace=True)
+        h = F.relu(self.conv3_3(h), inplace=True)
+        # relu3_3 = h
+        if opt.vgg_choose != "no_maxpool":
+            h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        h = F.relu(self.conv4_1(h), inplace=True)
+        relu4_1 = h
+        h = F.relu(self.conv4_2(h), inplace=True)
+        relu4_2 = h
+        conv4_3 = self.conv4_3(h)
+        h = F.relu(conv4_3, inplace=True)
+        relu4_3 = h
+
+        if opt.vgg_choose != "no_maxpool":
+            if opt.vgg_maxpooling:
+                h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        relu5_1 = F.relu(self.conv5_1(h), inplace=True)
+        relu5_2 = F.relu(self.conv5_2(relu5_1), inplace=True)
+        conv5_3 = self.conv5_3(relu5_2)
+        h = F.relu(conv5_3, inplace=True)
+        relu5_3 = h
+        if opt.vgg_choose == "conv4_3":
+            return conv4_3
+        elif opt.vgg_choose == "relu4_2":
+            return relu4_2
+        elif opt.vgg_choose == "relu4_1":
+            return relu4_1
+        elif opt.vgg_choose == "relu4_3":
+            return relu4_3
+        elif opt.vgg_choose == "conv5_3":
+            return conv5_3
+        elif opt.vgg_choose == "relu5_1":
+            return relu5_1
+        elif opt.vgg_choose == "relu5_2":
+            return relu5_2
+        elif opt.vgg_choose == "relu5_3" or "maxpool":
+            return relu5_3
 
 
 
