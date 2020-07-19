@@ -89,8 +89,12 @@ Add print statements to the __getitems__ functions (especially the one that is u
 
 Be careful where we need to set eval and test/train!
 
-Remember, single model is the grand network which contains the generator and the discriminator. (we are working with an instance of 'single model'). That is why in 'optimize_parameters', we only calling forward() once which will propagate through the generator and the discriminator.  CHECK WHERE FDO WE DO THE ALTERNATING THING WHERE WE TRAIN WITH REAL AND FAKE SEPERATELY ( AS RECOMMENDED BY RADFORD??). This could be impossible in our case because of the unsupervised setting that we are training in ( BUT RADFORD IS SPECIFIC TO THE UNSUPERVISED CASE ACCORDING TO THE TITLE?)
+Remember, single model is the grand network which contains the generator and the discriminator. (we are working with an instance of 'single model'). That is why in 'optimize_parameters', we only calling forward() once which will propagate through the generator and the discriminator.  CHECK WHERE FDO WE DO THE ALTERNATING THING WHERE WE TRAIN WITH REAL AND FAKE SEPERATELY (AS RECOMMENDED BY RADFORD??). This could be impossible in our case because of the unsupervised setting that we are training in ( BUT RADFORD IS SPECIFIC TO THE UNSUPERVISED CASE ACCORDING TO THE TITLE?)
 
 In the long term, I may need to compile better datasets. I dont think training for the 2 roles simulataneously is a viable solution
 
 Where to we use the vgg loss? It doesnt seem to be incorporated with the GAN loss.
+
+What is the folders A and B for? A is the dark and B is the light - which is the transition that we want.
+
+Why do many of the classes accept a parameter? An example being the unaligned_dataset class in unaligned_dataset.py
