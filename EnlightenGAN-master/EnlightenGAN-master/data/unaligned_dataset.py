@@ -60,37 +60,22 @@ class UnalignedDataset(BaseDataset):
         self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')
         self.dir_B = os.path.join(opt.dataroot, opt.phase + 'B')
 
-        # self.A_paths = make_dataset(self.dir_A)
-        # self.B_paths = make_dataset(self.dir_B)
-        self.A_imgs, self.A_paths = store_dataset(self.dir_A)
-        self.B_imgs, self.B_paths = store_dataset(self.dir_B)
+    
+        self.A_imgs, self.A_paths = store_dataset(self.dir_A)#This is understood
+        self.B_imgs, self.B_paths = store_dataset(self.dir_B)#This is understood
 
-        # self.A_paths = sorted(self.A_paths)
-        # self.B_paths = sorted(self.B_paths)
+
         self.A_size = len(self.A_paths)
         self.B_size = len(self.B_paths)
         
-        self.transform = get_transform(opt)
+        self.transform = get_transform(opt)#flipping,scaling and cropping the images
 
     def __getitem__(self, index):
-        # A_path = self.A_paths[index % self.A_size]
-        # B_path = self.B_paths[index % self.B_size]
-
-        # A_img = Image.open(A_path).convert('RGB')
-        # B_img = Image.open(B_path).convert('RGB')
+		
         A_img = self.A_imgs[index % self.A_size]
         B_img = self.B_imgs[index % self.B_size]
         A_path = self.A_paths[index % self.A_size]
         B_path = self.B_paths[index % self.B_size]
-        # A_size = A_img.size
-        # B_size = B_img.size
-        # A_size = A_size = (A_size[0]//16*16, A_size[1]//16*16)
-        # B_size = B_size = (B_size[0]//16*16, B_size[1]//16*16)
-        # A_img = A_img.resize(A_size, Image.BICUBIC)
-        # B_img = B_img.resize(B_size, Image.BICUBIC)
-        # A_gray = A_img.convert('LA')
-        # A_gray = 255.0-A_gray
-
         A_img = self.transform(A_img)
         B_img = self.transform(B_img)
 
@@ -100,12 +85,10 @@ class UnalignedDataset(BaseDataset):
             A_gray = 1. - (0.299*r+0.587*g+0.114*b)/2.
             A_gray = torch.unsqueeze(A_gray, 0)
             input_img = A_img
-            # A_gray = (1./A_gray)/255.
-        else:
+        else: # We are doing this!
             w = A_img.size(2)
             h = A_img.size(1)
             
-            # A_gray = (1./A_gray)/255.
             if (not self.opt.no_flip) and random.random() < 0.5:
                 idx = [i for i in range(A_img.size(2) - 1, -1, -1)]
                 idx = torch.LongTensor(idx)
@@ -126,9 +109,12 @@ class UnalignedDataset(BaseDataset):
                 B_img = (B_img + 1)/2.
                 B_img = (B_img - torch.min(B_img))/(torch.max(B_img) - torch.min(B_img))
                 B_img = B_img*2. -1
+				
+			#Below is the attention map calculation
+			# The weird calculations are for going from [-1,1] to [0,1]
             r,g,b = input_img[0]+1, input_img[1]+1, input_img[2]+1
-            A_gray = 1. - (0.299*r+0.587*g+0.114*b)/2.
-            A_gray = torch.unsqueeze(A_gray, 0)
+            A_gray = 1. - (0.299*r+0.587*g+0.114*b)/2. #Verified: The weird numbers are for going from RGB to grayscale
+            A_gray = torch.unsqueeze(A_gray, 0)#Returns a new tensor with a dimension of size one inserted at the specified position.
         return {'A': A_img, 'B': B_img, 'A_gray': A_gray, 'input_img': input_img,
                 'A_paths': A_path, 'B_paths': B_path}
 

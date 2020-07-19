@@ -3,8 +3,6 @@ from options.train_options import TrainOptions
 from data.data_loader import CreateDataLoader
 from models.models import create_model
 from util.visualizer import Visualizer
-from skimage import io
-import matplotlib.pyplot as plt
 
 def get_config(config):
     import yaml
@@ -14,7 +12,7 @@ def get_config(config):
 opt = TrainOptions().parse()# Sort of tokenize all the options
 config = get_config(opt.config)# Calls GTA --> This is a special file from nvidia!
 data_loader = CreateDataLoader(opt)
-dataset = data_loader.load_data()#This Dataloader type. Check how to handle this!
+dataset = data_loader.load_data()#This is understood!. Look carefully into what all is needed for this...
 dataset_size = len(data_loader)
 print('#training images = %d' % dataset_size)
 
@@ -31,8 +29,8 @@ for epoch in range(1, opt.niter + opt.niter_decay + 1):
         iter_start_time = time.time()
         total_steps += opt.batchSize
         epoch_iter = total_steps - dataset_size * (epoch - 1)
-        model.set_input(data)
-        model.optimize_parameters(epoch)
+        model.set_input(data) #Remember at this stage, data is the batch 'dataset' in dictionary format. It slots the data into the correct variables self.inputA,etc to easily perform propagation operations
+        model.optimize_parameters(epoch) # This is understood (the idea), still need to go deeper (into the actual functions that make it up)
 
         if total_steps % opt.display_freq == 0:
             visualizer.display_current_results(model.get_current_visuals(), epoch)

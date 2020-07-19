@@ -27,7 +27,7 @@ def CreateDataset(opt):
 
     print("dataset [%s] was created" % (dataset.name()))
     dataset.initialize(opt)
-    return dataset
+    return dataset #This seems to make sense!
 
 
 class CustomDatasetDataLoader(BaseDataLoader):

@@ -51,8 +51,6 @@ class SingleModel(BaseModel):
             self.fcn.eval()
             for param in self.fcn.parameters():
                 param.requires_grad = False
-        # load/define networks
-        # The naming conversion is different from those used in the paper
 
 		#G_A : Is our only generator
 		#D_A : Is the Global Discriminator
@@ -117,10 +115,7 @@ class SingleModel(BaseModel):
 
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
-        input_A = input['A' if AtoB else 'B']
-		print(len(input_A))
-		print(input_A)
-
+        input_A = input['A' if AtoB else 'B']# We can do this because it is a dictionary!
 		input_B = input['B' if AtoB else 'A']
         input_img = input['input_img']
         input_A_gray = input['A_gray']
@@ -334,9 +329,9 @@ class SingleModel(BaseModel):
         # forward
         self.forward()
         # G_A and G_B
-        self.optimizer_G.zero_grad()
-        self.backward_G(epoch)
-        self.optimizer_G.step()
+        self.optimizer_G.zero_grad()#<-- This is extremely important and needs to be performed before we do anything related to updating the weights
+        self.backward_G(epoch)# Calculate the updated gradients
+        self.optimizer_G.step()# Update the actual weights
         # D_A
         self.optimizer_D_A.zero_grad()
         self.backward_D_A()

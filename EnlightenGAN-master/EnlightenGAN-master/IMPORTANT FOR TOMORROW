@@ -1,6 +1,15 @@
-
-DONT PRINT, IT MAKES A HUGE DIFFERENCE
-
 Where dos the perceptual loss fit in
-How are the losses of the generator and discriminator sets
 Where/ how do we extract the attention map?
+
+
+Add print statements to the __getitems__ functions (especially the one that is used to create a dictionary containing the dataset). This is because the dictionary is only created in the __getitem__ function which does not seem to be explicitly called.
+
+Experiment with the attention map calculation ( it is in unaligned dataset.py)
+
+Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
+
+In the long term, I may need to compile better datasets. I dont think training for the 2 roles simulataneously is a viable solution
+
+Once I get decent results, filter out everything properly!
+
+Fix get_current_visuals function to save space!
