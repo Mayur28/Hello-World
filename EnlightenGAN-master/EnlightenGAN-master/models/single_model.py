@@ -138,8 +138,8 @@ class SingleModel(BaseModel):
 		
         if self.opt.use_ragan and use_ragan:#This is what I am doing! Below is similar to what we did for the generator where to used the average loss... But why do we subtract the mean? why are the subtraction values switched?
             loss_D = (self.criterionGAN(pred_real - torch.mean(pred_fake), True) +
-                                      self.criterionGAN(pred_fake - torch.mean(pred_real), False)) / 2
-		else:
+            self.criterionGAN(pred_fake - torch.mean(pred_real), False)) / 2
+        else:
             loss_D_real = self.criterionGAN(pred_real, True)
             loss_D_fake = self.criterionGAN(pred_fake, False)
             loss_D = (loss_D_real + loss_D_fake) * 0.5 # most of the time, we are taking the average loss between the real and fake images
@@ -166,12 +166,11 @@ class SingleModel(BaseModel):
         self.real_A = Variable(self.input_A) #Variable is basically a tensor (which represents a node in the comp. graph) and is part of the autograd package to easily compute gradients
         self.real_B = Variable(self.input_B)
         self.real_A_gray = Variable(self.input_A_gray)
-        self.real_img = Variable(self.input_img)# We are just packaging the data nicely.
-		
-		print("Shape of real_A: %s " % self.real_A.size())
-		print("Shape of real_B: %s " % self.real_B.size())
-		print("Shape of real_A_gray: %s " % self.real_A_gray.size())
-		print("Shape of real_img: %s " % self.real_img.size())
+        self.real_img = Variable(self.input_img)
+        print("Shape of real_A: %s " % self.real_A.size())
+        print("Shape of real_B: %s " % self.real_B.size())
+        print("Shape of real_A_gray: %s " % self.real_A_gray.size())
+        print("Shape of real_img: %s " % self.real_img.size())
         
         if self.opt.skip == 1: # This sort of makes sense, but where does the latent stuff fit in.
             self.fake_B, self.latent_real_A = self.netG_A.forward(self.real_img, self.real_A_gray)# Ive got an idea of whats going on here. Fake_B stores our fake samples( our result). As seen a little later, this will be (one of) the input to the discriminator 
@@ -280,12 +279,11 @@ class SingleModel(BaseModel):
         # D_A
         self.optimizer_D_A.zero_grad()#--> This is crucial!
         self.backward_D_A()# Calculate the gradients for the global discriminator.
-		
-		#Perform the actual update for both discriminators
-		self.optimizer_D_P.zero_grad()
-		self.backward_D_P()#--> The local discriminator gradient calculation. There is a pattern to all of them (they all doing the same thing but the generator needs to account for the VGG loss as well.)
-		self.optimizer_D_A.step()
-		self.optimizer_D_P.step()
+        #Perform the actual update for both discriminators
+        self.optimizer_D_P.zero_grad()
+        self.backward_D_P()#--> The local discriminator gradient calculation. There is a pattern to all of them (they all doing the same thing but the generator needs to account for the VGG loss as well.)
+        self.optimizer_D_A.step()
+        self.optimizer_D_P.step()
 
 
     def get_current_errors(self, epoch):
@@ -313,7 +311,7 @@ class SingleModel(BaseModel):
                 if self.opt.patch_vgg:
                     input_patch = util.tensor2im(self.input_patch.data)
                     self_attention = util.atten2im(self.real_A_gray.data)
-					return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
+        return OrderedDict([('real_A', real_A), ('fake_B', fake_B)])
 					
                     #ORIGINAL return OrderedDict([('real_A', real_A), ('fake_B', fake_B), ('latent_real_A', latent_real_A),
                                 #('latent_show', latent_show), ('real_B', real_B), ('real_patch', real_patch),
