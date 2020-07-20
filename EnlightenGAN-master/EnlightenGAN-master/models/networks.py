@@ -326,10 +326,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             gray_3 = self.downsample_2(gray_2)#20x20
             gray_4 = self.downsample_3(gray_3)#5x5
             gray_5 = self.downsample_4(gray_4)# 1.25x1.25 <-- This doesnt make sense
-			print("Gray_2 size: %s" % gray_2.size())
-			print("Gray_3 size: %s" % gray_3.size())
-			print("Gray_4 size: %s" % gray_4.size())
-			print("Gray_5 size: %s" % gray_5.size())
+            print("Gray_2 size: %s" % gray_2.size())
+            print("Gray_3 size: %s" % gray_3.size())
+            print("Gray_4 size: %s" % gray_4.size())
+            print("Gray_5 size: %s" % gray_5.size())
 			
 			# I want to display the stuff as it happens!
         if self.opt.use_norm == 1: # We use this
@@ -502,8 +502,8 @@ class PerceptualLoss(nn.Module):
 		
 
     def compute_vgg_loss(self, vgg, img, target):
-		print("Im in compute_vgg_loss: Size of vgg (fake_B) %s" % vgg.size())# Our enhanced image
-		print("Im in compute_vgg_loss: Size of target (real_A) %s" % target.size())# The corresponding low-light image that we enhanced
+        print("Im in compute_vgg_loss: Size of vgg (fake_B) %s" % vgg.size())# Our enhanced image
+        print("Im in compute_vgg_loss: Size of target (real_A) %s" % target.size())
         img_vgg = vgg_preprocess(img, self.opt) # img is fake_B and target being real_A) These are still batches (verified by looking at the parameters of vgg_preprocess.)
         target_vgg = vgg_preprocess(target, self.opt)
 		# For us, the preprocessing is the return the images in the range [0,255] and to be [B,G,R]--> CHECK WHY IS THIS?
