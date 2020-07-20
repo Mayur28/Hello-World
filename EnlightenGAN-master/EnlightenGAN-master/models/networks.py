@@ -13,7 +13,7 @@ from lib.nn import SynchronizedBatchNorm2d as SynBN2d
 # Functions
 ###############################################################################
 
-def pad_tensor(input):
+def pad_tensor(input):# If I recall correctly, it is(batch number, depth, fineSize,fineSize)
 
     height_org, width_org = input.shape[2], input.shape[3]
     divide = 16
@@ -52,9 +52,9 @@ def pad_tensor(input):
 
     return input, pad_left, pad_right, pad_top, pad_bottom
 
-def pad_tensor_back(input, pad_left, pad_right, pad_top, pad_bottom):
+def pad_tensor_back(input, pad_left, pad_right, pad_top, pad_bottom): # We are just removing the padding
     height, width = input.shape[2], input.shape[3]
-    return input[:,:, pad_top: height - pad_bottom, pad_left: width - pad_right]
+    return input[:,:, pad_top: height - pad_bottom, pad_left: width - pad_right]# This makes sense
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -142,10 +142,8 @@ class GANLoss(nn.Module):
         self.Tensor = tensor
         if use_lsgan:
             self.loss = nn.MSELoss()
-        else:
-            self.loss = nn.BCELoss()
 
-    def get_target_tensor(self, input, target_is_real):
+    def get_target_tensor(self, input, target_is_real):#This function basically creates a target label tensor which is used to compute the MSE in __call__.
         target_tensor = None
         if target_is_real:
             create_label = ((self.real_label_var is None) or
@@ -159,13 +157,13 @@ class GANLoss(nn.Module):
                             (self.fake_label_var.numel() != input.numel()))
             if create_label:
                 fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
-                self.fake_label_var = Variable(fake_tensor, requires_grad=False)
+                self.fake_label_var = Variable(fake_tensor, requires_grad=False)# When possible, try to display this.
             target_tensor = self.fake_label_var
         return target_tensor
 
     def __call__(self, input, target_is_real):
         target_tensor = self.get_target_tensor(input, target_is_real)
-        return self.loss(input, target_tensor)
+        return self.loss(input, target_tensor)# It is MSE for all samples in the batch
 
 
 
@@ -209,10 +207,7 @@ class NoNormDiscriminator(nn.Module):
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
-        # if len(self.gpu_ids) and isinstance(input.data, torch.cuda.FloatTensor):
-        #     return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
-        # else:
-        return self.model(input)
+        return self.model(input)# self.model is the discriminator defined above.
 
 class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used because dropout cannot be used with BatchNorm
     def __init__(self, opt, skip):
@@ -221,8 +216,20 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.opt = opt
         self.skip = skip# Check how this is done in the forward() function. Seems pretty useless here.
         p = 1# This is the size of the padding
+<<<<<<< HEAD
+        if opt.self_attention:
+            self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
+            # self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
+            self.downsample_1 = nn.MaxPool2d(2)# This is seperate( this is for the attention maps to fit the size of the filters in each layer) -----> This is for downsampling the attention map. At each step, the size of the attention map is halved.
+            self.downsample_2 = nn.MaxPool2d(2)
+            self.downsample_3 = nn.MaxPool2d(2)
+            self.downsample_4 = nn.MaxPool2d(2)
+        else:
+            self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
+=======
         #Why do we start with 4? Why dont we use ngf?
         self.conv1_1 = nn.Conv2d(4, 32, 3, padding = p)
+>>>>>>> 320265048e1820cd55577254dd356db733ec1888
 
         self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_1 = nn.BatchNorm2d(32)
@@ -230,7 +237,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_2 = nn.BatchNorm2d(32)	
         self.max_pool1 =  nn.MaxPool2d(2) # Are these 2 really necessary? May have to revert! Answer: It doesnt matter: we just defining the stuff, the ordering is sorted in the forward() function
+<<<<<<< HEAD
+=======
         self.downsample_1 = nn.MaxPool2d(2)
+>>>>>>> 320265048e1820cd55577254dd356db733ec1888
 
 
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=p)
@@ -240,7 +250,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU2_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn2_2 = nn.BatchNorm2d(64)
         self.max_pool2 =  nn.MaxPool2d(2)
+<<<<<<< HEAD
+=======
         self.downsample_2 = nn.MaxPool2d(2)
+>>>>>>> 320265048e1820cd55577254dd356db733ec1888
 
 
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=p)
@@ -250,7 +263,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU3_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn3_2 = nn.BatchNorm2d(128)
         self.max_pool3 = nn.MaxPool2d(2)
+<<<<<<< HEAD
+=======
         self.downsample_3 = nn.MaxPool2d(2)
+>>>>>>> 320265048e1820cd55577254dd356db733ec1888
         
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=p)
         self.LReLU4_1 = nn.LeakyReLU(0.2, inplace=True)
@@ -259,7 +275,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU4_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn4_2 = nn.BatchNorm2d(256)
         self.max_pool4 = nn.MaxPool2d(2)
+<<<<<<< HEAD
+=======
         self.downsample_4 = nn.MaxPool2d(2)
+>>>>>>> 320265048e1820cd55577254dd356db733ec1888
         
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=p)
         self.LReLU5_1 = nn.LeakyReLU(0.2, inplace=True)
@@ -307,32 +326,39 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.conv9_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU9_2 = nn.LeakyReLU(0.2, inplace=True)
 
-        self.conv10 = nn.Conv2d(32, 3, 1)
+        self.conv10 = nn.Conv2d(32, 3, 1)# This apparently has something to do with producing the latent space.
         if self.opt.tanh:
 	          self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
 
     def forward(self, input, gray):
         flag = 0
-        if input.size()[3] > 2200:
-            avg = nn.AvgPool2d(2)
+        if input.size()[3] > 2200: #This shouldnt be for us. I think this is when the fineSize is greater than 2200.
+            avg = nn.AvgPool2d(2)  #
             input = avg(input)
             gray = avg(gray)
             flag = 1
-            # pass
+            # Before Performing a forward pass on the tensor, we first pad the tensor containing the real (low-light) images
+			#If the dimensions of the images are perfectly divisible by 16, the paddings are zero.
+			# Otherwise, we pad the dimensions that are skew by the amount such that the dim. of the new padded version is divisible by 16.
         input, pad_left, pad_right, pad_top, pad_bottom = pad_tensor(input)
         gray, pad_left, pad_right, pad_top, pad_bottom = pad_tensor(gray)
         if self.opt.self_attention:
-            gray_2 = self.downsample_1(gray)
-            gray_3 = self.downsample_2(gray_2)
-            gray_4 = self.downsample_3(gray_3)
-            gray_5 = self.downsample_4(gray_4)
-        if self.opt.use_norm == 1:
+            gray_2 = self.downsample_1(gray)#80x80
+            gray_3 = self.downsample_2(gray_2)#20x20
+            gray_4 = self.downsample_3(gray_3)#5x5
+            gray_5 = self.downsample_4(gray_4)# 1.25x1.25 <-- This doesnt make sense
+			print("Gray_2 size: %s" % gray_2.size())
+			print("Gray_3 size: %s" % gray_3.size())
+			print("Gray_4 size: %s" % gray_4.size())
+			print("Gray_5 size: %s" % gray_5.size())
+			
+			# I want to display the stuff as it happens!
+        if self.opt.use_norm == 1: # We use this
             if self.opt.self_attention:
-                x = self.bn1_1(self.LReLU1_1(self.conv1_1(torch.cat((input, gray), 1))))
-                # x = self.bn1_1(self.LReLU1_1(self.conv1_1(input)))
+                x = self.bn1_1(self.LReLU1_1(self.conv1_1(torch.cat((input, gray), 1))))# Concatenate the input with the provided attention map  in the 1st dimension (not the same as 0)
             else:
                 x = self.bn1_1(self.LReLU1_1(self.conv1_1(input)))
-            conv1 = self.bn1_2(self.LReLU1_2(self.conv1_2(x)))
+            conv1 = self.bn1_2(self.LReLU1_2(self.conv1_2(x)))# From now on, we are just walking through the network (we doing block by block)
             x = self.max_pool1(conv1)
 
             x = self.bn2_1(self.LReLU2_1(self.conv2_1(x)))
@@ -350,7 +376,9 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             x = self.bn5_1(self.LReLU5_1(self.conv5_1(x)))
             x = x*gray_5 if self.opt.self_attention else x
             conv5 = self.bn5_2(self.LReLU5_2(self.conv5_2(x)))
-
+			
+			#Bottleneck has been reached - start upsampling
+			# Experiment here to see if bilinear upsampling really is this best option.
             conv5 = F.upsample(conv5, scale_factor=2, mode='bilinear')
             conv4 = conv4*gray_4 if self.opt.self_attention else conv4
             up6 = torch.cat([self.deconv5(conv5), conv4], 1)
@@ -377,40 +405,23 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
 
             latent = self.conv10(conv9)
 
-            if self.opt.times_residual:
+            if self.opt.times_residual:# True!
                 latent = latent*gray
 
             if self.opt.tanh:
-                latent = self.tanh(latent)
+                latent = self.tanh(latent)# Oddly does not apply to us
             if self.skip:
-                if self.opt.linear_add:
-                    if self.opt.latent_threshold:
-                        latent = F.relu(latent)
-                    elif self.opt.latent_norm:
-                        latent = (latent - torch.min(latent))/(torch.max(latent)-torch.min(latent))
-                    input = (input - torch.min(input))/(torch.max(input) - torch.min(input))
-                    output = latent + input*self.opt.skip
-                    output = output*2 - 1
-                else:
-                    if self.opt.latent_threshold:
-                        latent = F.relu(latent)
-                    elif self.opt.latent_norm:
-                        latent = (latent - torch.min(latent))/(torch.max(latent)-torch.min(latent))
-                    output = latent + input*self.opt.skip
-            else:
-                output = latent
+            	output = latent + input*self.opt.skip
 
-            if self.opt.linear:
-                output = output/torch.max(torch.abs(output))
-
+            
         output = pad_tensor_back(output, pad_left, pad_right, pad_top, pad_bottom)
         latent = pad_tensor_back(latent, pad_left, pad_right, pad_top, pad_bottom)
         gray = pad_tensor_back(gray, pad_left, pad_right, pad_top, pad_bottom)
-        if flag == 1:
+        if flag == 1: # If fineSize>2200 which resulting in having to perform AvgPooling
             output = F.upsample(output, scale_factor=2, mode='bilinear')
             gray = F.upsample(gray, scale_factor=2, mode='bilinear')
         if self.skip:
-            return output, latent
+            return output, latent # Want to see what is this latent!
         else:
             return output
 
@@ -495,7 +506,7 @@ def vgg_preprocess(batch, opt):
     (r, g, b) = torch.chunk(batch, 3, dim = 1)
     batch = torch.cat((b, g, r), dim = 1) # convert RGB to BGR
     batch = (batch + 1) * 255 * 0.5 # [-1, 1] -> [0, 255]
-    if opt.vgg_mean:
+    if opt.vgg_mean: # Fortunately, we dont do this!!!
         mean = tensortype(batch.data.size())
         mean[:, 0, :, :] = 103.939
         mean[:, 1, :, :] = 116.779
@@ -512,14 +523,18 @@ class PerceptualLoss(nn.Module):
 		
 
     def compute_vgg_loss(self, vgg, img, target):
-        img_vgg = vgg_preprocess(img, self.opt)
+		print("Im in compute_vgg_loss: Size of vgg (fake_B) %s" % vgg.size())# Our enhanced image
+		print("Im in compute_vgg_loss: Size of target (real_A) %s" % target.size())# The corresponding low-light image that we enhanced
+        img_vgg = vgg_preprocess(img, self.opt) # img is fake_B and target being real_A) These are still batches (verified by looking at the parameters of vgg_preprocess.)
         target_vgg = vgg_preprocess(target, self.opt)
-        img_fea = vgg(img_vgg, self.opt)
-        target_fea = vgg(target_vgg, self.opt)
+		# For us, the preprocessing is the return the images in the range [0,255] and to be [B,G,R]--> CHECK WHY IS THIS?
+
+        img_fea = vgg(img_vgg, self.opt) # This gets the feature map of the enhanced image
+        target_fea = vgg(target_vgg, self.opt)# This gets the feature map of the real image (is real the low-light image of the normal light reference image?)
         if self.opt.no_vgg_instance:
             return torch.mean((img_fea - target_fea) ** 2)
         else:
-            return torch.mean((self.instancenorm(img_fea) - self.instancenorm(target_fea)) ** 2)
+            return torch.mean((self.instancenorm(img_fea) - self.instancenorm(target_fea)) ** 2) # We are using this to stabilize training( as mentioned in the paper)
 
 def load_vgg16(model_dir, gpu_ids):
     """ Use the model from https://github.com/abhiskk/fast-neural-style/blob/master/neural_style/utils.py """
