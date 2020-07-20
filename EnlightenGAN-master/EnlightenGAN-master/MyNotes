@@ -107,3 +107,21 @@ I dont understand what are they doing for the input image???
 
 I changed DataParallel because at the moment, I'm only using one GPU.This function basically chunks the input across all the GPU's (uncomment if Shun makes a plan)
 
+Looking into the GANLoss class, we see that self.loss is actually set to MSEloss
+
+When they say that they concatenate and reshaping the attention maps to the filter size, we actually do this in the decoder( get multiplied when we are upsampling)
+
+The A's are the low-light images, B's are random normal light images
+
+The generator output is not using tanh and the discriminator output is not using sigmoid
+
+The patches are quite important
+
+Confirm the story of switching the labels in backward_G!
+
+For some magical reason, they are sure that real and fake images are in the range [-1,1] but there doesnt seems anything explicit to enforce this?
+
+In vgg_preprocess, why are the colour channels reversed?
+
+
+Verify the sequence that the weights are updated in!

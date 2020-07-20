@@ -11,7 +11,33 @@ Fix get_current_visuals function to save space!
 
 In the long term, I may need to compile better datasets. I dont think training for the 2 roles simulataneously is a viable solution
 
+Try to display the many aspects within the generator when doing a forward pass (what do the many resized attention maps or the latent result look like before any further processing)
+
+I think I get it out: the "real image" is our reference input (normal light) image which and is what is used to illustrate what the model should achieve.
+
+BEFORE EXECUTING AGAIN ON COLAB, I SHOULD FILTER OUT THE DATASETS.
+FIND A BETTER STRATEGY TO TRAIN FOR THE 2 TASKS
+
+Confirm the switching of labels in the backward_G function
+
+
+Find a way to display the images so that I can see what is input_A, input_B and input_img
+Understand how the filters, kernels and strides are configured to achieve different things
+
+
+
 My Experimentations:
 
+I MUST BLEND WITH THE PyTorch DCGAN EXAMPLE AND CHECK THE OVERLAPS AND DISPARITIES
+
+Read sebaa for handling the data properly
 Remove the redundant down sample in the generator
 To upsample in the generator, try the transpose convolutional layer
+Instead of setting the resize_or_crop to the default being crop, try resize
+Check what happens if I remove the resize in the set_input function (single model.py)
+To make life fair, I should try and form my own datasets that conduces what I'm doing
+Try to display the many aspects within the generator when doing a forward pass (what do the many resized attention maps or the latent result look like before any further processing)
+Its okay if our training results seem small because for their prediction process, the original size is maintained.
+Try to filter out line 265 in single_model.py. It seems to me that many aspects are redundant.
+
+I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate.

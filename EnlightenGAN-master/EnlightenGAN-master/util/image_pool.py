@@ -10,10 +10,10 @@ class ImagePool():
             self.images = []
 
     def query(self, images):
-        if self.pool_size == 0:
+        if self.pool_size == 0: # Ours is initialized to 50
             return images
         return_images = []
-        for image in images.data:
+        for image in images.data:# This .data seems to be built-in but what does it do?
             image = torch.unsqueeze(image, 0)
             if self.num_imgs < self.pool_size:
                 self.num_imgs = self.num_imgs + 1
