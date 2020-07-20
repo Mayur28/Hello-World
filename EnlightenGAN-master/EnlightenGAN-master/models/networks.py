@@ -216,7 +216,6 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.opt = opt
         self.skip = skip# Check how this is done in the forward() function. Seems pretty useless here.
         p = 1# This is the size of the padding
-<<<<<<< HEAD
         if opt.self_attention:
             self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
             # self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
@@ -226,10 +225,8 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             self.downsample_4 = nn.MaxPool2d(2)
         else:
             self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
-=======
         #Why do we start with 4? Why dont we use ngf?
         self.conv1_1 = nn.Conv2d(4, 32, 3, padding = p)
->>>>>>> 320265048e1820cd55577254dd356db733ec1888
 
         self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_1 = nn.BatchNorm2d(32)
@@ -237,11 +234,6 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_2 = nn.BatchNorm2d(32)	
         self.max_pool1 =  nn.MaxPool2d(2) # Are these 2 really necessary? May have to revert! Answer: It doesnt matter: we just defining the stuff, the ordering is sorted in the forward() function
-<<<<<<< HEAD
-=======
-        self.downsample_1 = nn.MaxPool2d(2)
->>>>>>> 320265048e1820cd55577254dd356db733ec1888
-
 
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=p)
         self.LReLU2_1 = nn.LeakyReLU(0.2, inplace=True)
@@ -250,11 +242,6 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU2_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn2_2 = nn.BatchNorm2d(64)
         self.max_pool2 =  nn.MaxPool2d(2)
-<<<<<<< HEAD
-=======
-        self.downsample_2 = nn.MaxPool2d(2)
->>>>>>> 320265048e1820cd55577254dd356db733ec1888
-
 
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=p)
         self.LReLU3_1 = nn.LeakyReLU(0.2, inplace=True)
@@ -263,11 +250,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU3_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn3_2 = nn.BatchNorm2d(128)
         self.max_pool3 = nn.MaxPool2d(2)
-<<<<<<< HEAD
-=======
-        self.downsample_3 = nn.MaxPool2d(2)
->>>>>>> 320265048e1820cd55577254dd356db733ec1888
-        
+
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=p)
         self.LReLU4_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn4_1 = nn.BatchNorm2d(256)
@@ -275,11 +258,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU4_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn4_2 = nn.BatchNorm2d(256)
         self.max_pool4 = nn.MaxPool2d(2)
-<<<<<<< HEAD
-=======
-        self.downsample_4 = nn.MaxPool2d(2)
->>>>>>> 320265048e1820cd55577254dd356db733ec1888
-        
+
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=p)
         self.LReLU5_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn5_1 = nn.BatchNorm2d(512)
