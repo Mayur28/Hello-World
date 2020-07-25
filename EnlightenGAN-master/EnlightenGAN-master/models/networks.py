@@ -77,7 +77,7 @@ def get_norm_layer(norm_type='instance'):
     return norm_layer
 
 
-def define_G(norm='batch' gpu_ids=[], skip=False, opt=None):
+def define_G(norm='batch', gpu_ids=[], skip=False, opt=None):
     netG = None
     use_gpu = len(gpu_ids) > 0
     norm_layer = get_norm_layer(norm_type=norm)
@@ -94,7 +94,7 @@ def define_G(norm='batch' gpu_ids=[], skip=False, opt=None):
     return netG
 
 
-def define_D(which_model_netD, n_layers_D=3, norm='batch', gpu_ids=[]):
+def define_D(n_layers_D=3, norm='batch', gpu_ids=[]):
     netD = None
     use_gpu = len(gpu_ids) > 0
     norm_layer = get_norm_layer(norm_type=norm)
@@ -169,7 +169,8 @@ class NoNormDiscriminator(nn.Module):
     def __init__(self, n_layers=3, gpu_ids=[]):
         super(NoNormDiscriminator, self).__init__()
         self.gpu_ids = gpu_ids
-
+        input_nc=3
+        ndf=64
         kw = 4
         padw = int(np.ceil((kw-1)/2))
         sequence = [
@@ -197,9 +198,7 @@ class NoNormDiscriminator(nn.Module):
         ]
 
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
-
-        if use_sigmoid:
-            sequence += [nn.Sigmoid()]
+        sequence += [nn.Sigmoid()]
 
         self.model = nn.Sequential(*sequence)
 
