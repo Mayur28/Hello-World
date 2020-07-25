@@ -55,11 +55,11 @@ class SingleModel(BaseModel):
             use_sigmoid = opt.no_lsgan# False
             #Below is the global discriminator
 			#Below is correct that we are accepting 'output_nc' which represents a char. of the sample produced by the generator.
-            self.netD_A = networks.define_D(opt.which_model_netD, opt.n_layers_D, opt.norm, self.gpu_ids)
+            self.netD_A = networks.define_D(opt.n_layers_D, opt.norm, self.gpu_ids)
 			#3,64, no_norm_4,5,instance,false,0,false
             if self.opt.patchD:
                 #This is the local 'patch' based discriminator( n_layers_patchD=4 ( one less than the global discriminator( this excludes the boundary layers)))
-                self.netD_P = networks.define_D(opt.input_nc, opt.ndf,opt.which_model_netD,opt.n_layers_patchD, opt.norm, use_sigmoid, self.gpu_ids, True)
+                self.netD_P = networks.define_D(opt.n_layers_patchD, opt.norm, self.gpu_ids)
                 #3,64,no_norm_4,4,'instance',False,..... Last parameter specifies if its patch based)--> But on the other side, the patch is not accounted for...
         if not self.isTrain or opt.continue_train:
             which_epoch = opt.which_epoch
