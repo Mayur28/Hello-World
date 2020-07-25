@@ -2,7 +2,7 @@ import time
 from options.train_options import TrainOptions
 from data.data_loader import CreateDataLoader
 from util.visualizer import Visualizer
-from .single_model import SingleModel
+from models.single_model import SingleModel
 
 def get_config(config):
     import yaml
