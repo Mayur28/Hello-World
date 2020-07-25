@@ -24,6 +24,8 @@ Confirm the switching of labels in the backward_G function
 Find a way to display the images so that I can see what is input_A, input_B and input_img
 Understand how the filters, kernels and strides are configured to achieve different things
 
+Check if I should also do some form of data augmentation (removed stuff in get_transform and unaligned_dataset)
+
 
 
 My Experimentations:
