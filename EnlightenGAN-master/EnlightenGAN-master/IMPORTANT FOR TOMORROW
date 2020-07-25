@@ -38,7 +38,7 @@ To upsample in the generator, try the transpose convolutional layer
 Instead of setting the resize_or_crop to the default being crop, try resize
 Check what happens if I remove the resize in the set_input function (single model.py)
 To make life fair, I should try and form my own datasets that conduces what I'm doing
-Try to display the many aspects within the generator when doing a forward pass (what do the many resized attention maps or the latent result look like before any further processing)
+Check what is the purpose of the latent result
 Its okay if our training results seem small because for their prediction process, the original size is maintained.
 Try to filter out line 265 in single_model.py. It seems to me that many aspects are redundant.
 
@@ -47,3 +47,8 @@ I dont see where is the vgg forward function called? In the Perceptual loss clas
 Try to find out why did they train with the images flipped?
 
 Go through opt and filter out all the useless parameters
+Try another form of downsampling in the generator( to remove the maxpooling)
+
+Since I'm assuming that the model is being trained for even darkness, take matters into my own hands and try with my own images to verify!
+
+TRY TO PUT THE BATCH NORMALIZATION BEFORE THE LReLu(MLM says before but many forums found empirically that BN after LReLu performs better)

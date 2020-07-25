@@ -26,16 +26,16 @@ class SingleModel(BaseModel):
         nb = opt.batchSize# Batch size (16)
         size = opt.fineSize # From my understanding, the size of the input images
         self.opt = opt
-        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#We are basically creating a tensor of 16 colour images with size fineSize x fineSize
-        self.input_B = self.Tensor(nb, opt.output_nc, size, size) # Same as above but now for storing output
-        self.input_img = self.Tensor(nb, opt.input_nc, size, size) # What does all of this actually mean?
+        self.input_A = self.Tensor(nb, opt.input_nc, size, size)#We are basically creating a tensor to store 16 low-light colour images with size fineSize x fineSize
+        self.input_B = self.Tensor(nb, opt.output_nc, size, size) # Same as above but now for storing the normal-light images (NOT THE RESULT!)
+        self.input_img = self.Tensor(nb, opt.input_nc, size, size) # What this actually mean?
         self.input_A_gray = self.Tensor(nb, 1, size, size) # this is for the attention maps
 		
 		#Track the above carefully
 
         if opt.vgg > 0: # We are using this!
-            self.vgg_loss = networks.PerceptualLoss(opt)
-            self.vgg_loss.cuda()#--> moves the variable to the GPU (Why is this the only thing shipped to the GPU?) -> How is it a loss?
+            self.vgg_loss = networks.PerceptualLoss(opt)# We just create the instance that defines an instance norm layer. We still need to place this into the image.
+            self.vgg_loss.cuda()#--> moves the variable to the GPU
             self.vgg = networks.load_vgg16("./model", self.gpu_ids) #Actually load the VGG model(THIS IS CRUCIAL!)... This is the weights that we had to manually add
             self.vgg.eval() # We call eval() when some layers within the self.vgg network behave differently during training and testing... This will not be trained (Its frozen!)!
 			#The eval function is often used as a pair with the requires.grad or torch.no grad functions (which makse sense)
@@ -49,14 +49,13 @@ class SingleModel(BaseModel):
        #ngf is the number of filters in the first conv layer in the generator. ndf is the number of filters used in the first conv layer in the disc.
         skip = True if opt.skip > 0 else False # We are using skip connections!
 		
-		#For below: define_G(3,3,64,sid_unet_resize,instance,not 1=0,..........)
-        self.netG_A = networks.define_G(opt.input_nc, opt.output_nc,opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, self.gpu_ids, skip=skip, opt=opt)
+        self.netG_A = networks.define_G(opt.norm, self.gpu_ids,skip=skip,opt=opt)
         #It looks like they are handling each sub-network as an attribute of 'self'.
         if self.isTrain: #We have this
-            use_sigmoid = opt.no_lsgan
+            use_sigmoid = opt.no_lsgan# False
             #Below is the global discriminator
 			#Below is correct that we are accepting 'output_nc' which represents a char. of the sample produced by the generator.
-            self.netD_A = networks.define_D(opt.output_nc, opt.ndf,opt.which_model_netD, opt.n_layers_D, opt.norm, use_sigmoid, self.gpu_ids, False)
+            self.netD_A = networks.define_D(opt.which_model_netD, opt.n_layers_D, opt.norm, self.gpu_ids)
 			#3,64, no_norm_4,5,instance,false,0,false
             if self.opt.patchD:
                 #This is the local 'patch' based discriminator( n_layers_patchD=4 ( one less than the global discriminator( this excludes the boundary layers)))

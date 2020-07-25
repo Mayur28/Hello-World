@@ -77,7 +77,7 @@ def get_norm_layer(norm_type='instance'):
     return norm_layer
 
 
-def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[], skip=False, opt=None):
+def define_G(norm='batch' gpu_ids=[], skip=False, opt=None):
     netG = None
     use_gpu = len(gpu_ids) > 0
     norm_layer = get_norm_layer(norm_type=norm)
@@ -85,8 +85,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
     if use_gpu:
         assert(torch.cuda.is_available())
 
-    if which_model_netG == 'sid_unet_resize':
-        netG = Unet_resize_conv(opt, skip)
+    netG = Unet_resize_conv(opt, skip)# This just defines the skeleton of the network.
     
     if len(gpu_ids) > 0:
         netG.cuda(device=gpu_ids[0])# jackpot! We see that the model is loaded to the GPU
@@ -95,8 +94,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
     return netG
 
 
-def define_D(input_nc, ndf, which_model_netD,
-             n_layers_D=3, norm='batch', use_sigmoid=False, gpu_ids=[], patch=False):
+def define_D(which_model_netD, n_layers_D=3, norm='batch', gpu_ids=[]):
     netD = None
     use_gpu = len(gpu_ids) > 0
     norm_layer = get_norm_layer(norm_type=norm)
@@ -104,8 +102,7 @@ def define_D(input_nc, ndf, which_model_netD,
     if use_gpu:
         assert(torch.cuda.is_available())
 
-    if which_model_netD == 'no_norm_4':
-        netD = NoNormDiscriminator(input_nc, ndf, n_layers_D, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+    netD = NoNormDiscriminator(n_layers_D, gpu_ids=gpu_ids)
     
     if use_gpu:
         netD.cuda(device=gpu_ids[0]) # Jackpot, we are loading the model to the GPU
@@ -169,7 +166,7 @@ class GANLoss(nn.Module):
 
 
 class NoNormDiscriminator(nn.Module):
-    def __init__(self, input_nc, ndf=64, n_layers=3, use_sigmoid=False, gpu_ids=[]):
+    def __init__(self, n_layers=3, gpu_ids=[]):
         super(NoNormDiscriminator, self).__init__()
         self.gpu_ids = gpu_ids
 
@@ -217,23 +214,20 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.skip = skip# Check how this is done in the forward() function. Seems pretty useless here.
         p = 1# This is the size of the padding
         if opt.self_attention:
-            self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)
-            # self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
+            self.conv1_1 = nn.Conv2d(4, 32, 3, padding=p)# 4 because of the the RGB image and the attention map?
             self.downsample_1 = nn.MaxPool2d(2)# This is seperate( this is for the attention maps to fit the size of the filters in each layer) -----> This is for downsampling the attention map. At each step, the size of the attention map is halved.
             self.downsample_2 = nn.MaxPool2d(2)
             self.downsample_3 = nn.MaxPool2d(2)
             self.downsample_4 = nn.MaxPool2d(2)
         else:
             self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
-        #Why do we start with 4? Why dont we use ngf?
-        self.conv1_1 = nn.Conv2d(4, 32, 3, padding = p)
-
+			
         self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_1 = nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
         self.bn1_2 = nn.BatchNorm2d(32)	
-        self.max_pool1 =  nn.MaxPool2d(2) # Are these 2 really necessary? May have to revert! Answer: It doesnt matter: we just defining the stuff, the ordering is sorted in the forward() function
+        self.max_pool1 =  nn.MaxPool2d(2) 
 
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=p)
         self.LReLU2_1 = nn.LeakyReLU(0.2, inplace=True)
