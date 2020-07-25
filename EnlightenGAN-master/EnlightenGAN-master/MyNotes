@@ -127,3 +127,7 @@ In vgg_preprocess, why are the colour channels reversed?
 Verify the sequence that the weights are updated in!
 
 Consider removing the pool stuff in the backward pass of the discriminator
+
+SECOND PASS
+
+Look intot he class definitions with a parameter( which is usually from another file/function)

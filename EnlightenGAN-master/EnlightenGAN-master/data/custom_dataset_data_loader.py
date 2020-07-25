@@ -17,7 +17,7 @@ class CustomDatasetDataLoader(BaseDataLoader):
         return 'CustomDatasetDataLoader'
 
     def initialize(self, opt):
-        BaseDataLoader.initialize(self, opt)
+        BaseDataLoader.initialize(self, opt)# its not the current class but the parameters still uses 'self'
         self.dataset = CreateDataset(opt)
         self.dataloader = torch.utils.data.DataLoader(self.dataset,batch_size=opt.batchSize,shuffle=not opt.serial_batches, num_workers=int(opt.nThreads))
 

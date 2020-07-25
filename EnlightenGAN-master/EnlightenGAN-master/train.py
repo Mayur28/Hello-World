@@ -68,6 +68,6 @@ for epoch in range(1, opt.niter + opt.niter_decay + 1):
             model.update_learning_rate()
             model.update_learning_rate()
             model.update_learning_rate()
-    else:# We doing this and it verified in the paper where they state that the model is trained with lr=1e-4 for 100 epochs and then decays
+    else:
         if epoch > opt.niter:
             model.update_learning_rate()
