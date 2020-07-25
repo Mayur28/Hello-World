@@ -5,7 +5,7 @@ from data.data_loader import CreateDataLoader
 from util.visualizer import Visualizer
 from pdb import set_trace as st
 from util import html
-from .single_model import SingleModel
+from models.single_model import SingleModel
 
 
 opt = TestOptions().parse()
