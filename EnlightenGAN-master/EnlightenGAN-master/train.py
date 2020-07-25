@@ -1,8 +1,8 @@
 import time
 from options.train_options import TrainOptions
 from data.data_loader import CreateDataLoader
-from models.models import create_model
 from util.visualizer import Visualizer
+from .single_model import SingleModel
 
 def get_config(config):
     import yaml
@@ -17,9 +17,9 @@ dataset_size = len(data_loader)#
 print('#training images = %d' % dataset_size)
 #All above is thoroughly understood
 
+model = SingleModel()
+model.initialize(opt)
 
-
-model = create_model(opt)
 visualizer = Visualizer(opt)
 
 total_steps = 0
