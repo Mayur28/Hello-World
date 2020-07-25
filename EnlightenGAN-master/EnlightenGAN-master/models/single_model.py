@@ -167,10 +167,10 @@ class SingleModel(BaseModel):
         self.real_B = Variable(self.input_B)
         self.real_A_gray = Variable(self.input_A_gray)
         self.real_img = Variable(self.input_img)
-        print("Shape of real_A: %s " % self.real_A.size())
-        print("Shape of real_B: %s " % self.real_B.size())
-        print("Shape of real_A_gray: %s " % self.real_A_gray.size())
-        print("Shape of real_img: %s " % self.real_img.size())
+        #print("Shape of real_A: %s " % self.real_A.size())
+        #print("Shape of real_B: %s " % self.real_B.size())
+        #print("Shape of real_A_gray: %s " % self.real_A_gray.size())
+        #print("Shape of real_img: %s " % self.real_img.size())
         
         if self.opt.skip == 1: # This sort of makes sense, but where does the latent stuff fit in.
             self.fake_B, self.latent_real_A = self.netG_A.forward(self.real_img, self.real_A_gray)# Ive got an idea of whats going on here. Fake_B stores our fake samples( our result). As seen a little later, this will be (one of) the input to the discriminator 
