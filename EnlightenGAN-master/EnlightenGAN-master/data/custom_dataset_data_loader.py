@@ -1,6 +1,4 @@
 import torch.utils.data
-from data.base_data_loader import BaseDataLoader
-
 
 def CreateDataset(opt):
     dataset = None
@@ -12,12 +10,12 @@ def CreateDataset(opt):
     return dataset #This seems to make sense!
 
 
-class CustomDatasetDataLoader(BaseDataLoader):
+class CustomDatasetDataLoader:
     def name(self):
         return 'CustomDatasetDataLoader'
 
     def initialize(self, opt):
-        BaseDataLoader.initialize(self, opt)# its not the current class but the parameters still uses 'self'
+		self.opt=opt
         self.dataset = CreateDataset(opt)
         self.dataloader = torch.utils.data.DataLoader(self.dataset,batch_size=opt.batchSize,shuffle=not opt.serial_batches, num_workers=int(opt.nThreads))
 
