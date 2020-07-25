@@ -43,3 +43,5 @@ Try to filter out line 265 in single_model.py. It seems to me that many aspects 
 I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate.
 
 Try to find out why did they train with the images flipped?
+
+Go through opt and filter out all the useless parameters

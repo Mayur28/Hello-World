@@ -80,7 +80,8 @@ class UnalignedDataset(BaseDataset):
 
         w = A_img.size(2)
         h = A_img.size(1)
-
+		"""# this is because some of the images were still being flipped for some reason
+		# This could be interpretted as a form of data augmentation.
         if (not self.opt.no_flip) and random.random() < 0.5:
             idx = [i for i in range(A_img.size(2) - 1, -1, -1)]
             idx = torch.LongTensor(idx)
@@ -95,8 +96,10 @@ class UnalignedDataset(BaseDataset):
             times = random.randint(self.opt.low_times,self.opt.high_times)/100.
             input_img = (A_img+1)/2./times
             input_img = input_img*2-1
+			
         else:
-            input_img = A_img
+		"""
+        input_img = A_img
 
         #Below is the attention map calculation
         # The weird calculations are for going from [-1,1] to [0,1]

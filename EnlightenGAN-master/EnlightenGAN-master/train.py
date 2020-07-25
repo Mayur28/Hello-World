@@ -11,10 +11,11 @@ def get_config(config):
 
 opt = TrainOptions().parse()# Sort of tokenize all the options
 config = get_config(opt.config)# Calls GTA --> This is a special file from nvidia!
-data_loader = CreateDataLoader(opt)
-dataset = data_loader.load_data()#This is understood!. Look carefully into what all is needed for this...
-dataset_size = len(data_loader)
+data_loader = CreateDataLoader(opt)# The opt isnt really needed by we just need an instance of the class
+dataset = data_loader.load_data()# This is an implemented function!
+dataset_size = len(data_loader)#
 print('#training images = %d' % dataset_size)
+#All above is thoroughly understood
 
 
 

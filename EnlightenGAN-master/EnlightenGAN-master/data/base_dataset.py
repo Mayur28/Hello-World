@@ -18,12 +18,10 @@ def get_transform(opt):
     if opt.resize_or_crop == 'crop':
     	transform_list.append(transforms.RandomCrop(opt.fineSize))# Randomly crop an image of size finesize
 
-    if opt.isTrain and not opt.no_flip:
-        transform_list.append(transforms.RandomHorizontalFlip())
 
     transform_list += [transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5),
-                                            (0.5, 0.5, 0.5))]
+                       transforms.Normalize((0.5, 0.5, 0.5),# this is neat. Looking at one channel (column), we are
+                                            (0.5, 0.5, 0.5))]# specifying mean=std=0.5 which normalizes the images to [-1,1]
     return transforms.Compose(transform_list)
 
 def __scale_width(img, target_width):
