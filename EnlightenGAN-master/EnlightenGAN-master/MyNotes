@@ -130,4 +130,11 @@ Consider removing the pool stuff in the backward pass of the discriminator
 
 SECOND PASS
 
-Look intot he class definitions with a parameter( which is usually from another file/function)
+Look into the class definitions with a parameter( which is usually from another file/function)
+
+The trend is to first create an instance of the class, then immediately call the initialize class.
+
+I should get the structuring (file tree) like them to easily retrieve the data.
+
+A is the dark images and B is the bright (reference images)
+When I want to see the latent stuff, the attention map and the patchs, uncomment the original dictionary setting.

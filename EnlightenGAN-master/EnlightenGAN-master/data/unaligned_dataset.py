@@ -56,19 +56,19 @@ def pad_tensor_back(input, pad_left, pad_right, pad_top, pad_bottom):
 class UnalignedDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
-        self.root = opt.dataroot
         self.dir_A = os.path.join(opt.dataroot, opt.phase + 'A')
         self.dir_B = os.path.join(opt.dataroot, opt.phase + 'B')
 
     
-        self.A_imgs, self.A_paths = store_dataset(self.dir_A)#This is understood
-        self.B_imgs, self.B_paths = store_dataset(self.dir_B)#This is understood
-
+        self.A_imgs, self.A_paths = store_dataset(self.dir_A)#This just retrieves the images and their paths
+        self.B_imgs, self.B_paths = store_dataset(self.dir_B)#This just retrieves the images and their paths
+		
+		#A is the dark images and B is the bright (reference images)
 
         self.A_size = len(self.A_paths)
         self.B_size = len(self.B_paths)
         
-        self.transform = get_transform(opt)#flipping,scaling and cropping the images
+        self.transform = get_transform(opt)#We're just setting what the transforms should be, we are not performing them here.
 
     def __getitem__(self, index):# Each image in the batch will do this
         A_img = self.A_imgs[index % self.A_size]

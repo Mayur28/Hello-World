@@ -50,7 +50,6 @@ class ImageFolder(data.Dataset):
                                "Supported image extensions are: " +
                                ",".join(IMG_EXTENSIONS)))
 
-        self.root = root
         self.imgs = imgs
         self.transform = transform
         self.return_paths = return_paths
