@@ -7,7 +7,7 @@ def CreateDataset(opt):
     dataset = UnalignedDataset() #Retrieves the images from A and B and applies the necessary transformations on the images
     print("dataset [%s] was created" % (dataset.name()))
     dataset.initialize(opt)
-    return dataset #This seems to make sense!
+    return dataset #This seems to make sense!-> This is already in dictionary form, the dataloading is just extracting!
 
 
 class CustomDatasetDataLoader:

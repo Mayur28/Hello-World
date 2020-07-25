@@ -23,10 +23,11 @@ model.initialize(opt)
 visualizer = Visualizer(opt)
 
 total_steps = 0
-# Below is the big deal!!! range(1,100+100+1)
+# Below is the big deal!!! range(1,100+100+1)# the lr decays for last 100 epochs
 for epoch in range(1, opt.niter + opt.niter_decay + 1):
     epoch_start_time = time.time()
-    for i, data in enumerate(dataset):# This represents the chunked dataset! it will process each batch accordingly. GUARANTEED! I DEF. NEED THIS!
+    for i, data in enumerate(dataset):# This represents the chunked dataset! it will process each batch accordingly. GUARANTEED!--> Apparently restarts the dataloader iterator on each epoch. I DEF. NEED THIS!
+		# Each padd, the dataset dataloader is called which takes a slice of what is retrieved from Unaligned_Dataset, noting that recieving from Unaligned_dataset in each pass is in the desired dictionary format! This means that data is in mini-dictionary form!
         iter_start_time = time.time()
         total_steps += opt.batchSize
         epoch_iter = total_steps - dataset_size * (epoch - 1)

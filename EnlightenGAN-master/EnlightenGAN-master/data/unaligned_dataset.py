@@ -100,7 +100,7 @@ class UnalignedDataset(BaseDataset):
 			
         else:
         """
-        input_img = A_img
+        input_img = A_img# This is important!
 
         #Below is the attention map calculation
         # The weird calculations are for going from [-1,1] to [0,1]

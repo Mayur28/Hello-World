@@ -140,3 +140,5 @@ A is the dark images and B is the bright (reference images)
 When I want to see the latent stuff, the attention map and the patchs, uncomment the original dictionary setting.
 
 When writing the report, describe how the data is pre-processed!
+
+It appears that the output is formed by multiplying the latent image with the low-light image.

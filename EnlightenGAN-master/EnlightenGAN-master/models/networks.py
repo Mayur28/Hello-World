@@ -310,8 +310,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             gray = avg(gray)
             flag = 1
             # Before Performing a forward pass on the tensor, we first pad the tensor containing the real (low-light) images
-			#If the dimensions of the images are perfectly divisible by 16, the paddings are zero.
+			#If the dimensions of the images are perfectly divisible by 16, we dont pad.
 			# Otherwise, we pad the dimensions that are skew by the amount such that the dim. of the new padded version is divisible by 16.
+			#The pad_tensor function performs the padding (if necessary) and returns how much padding was applied to each side which makes it easier when removing the padding later.
+			
         input, pad_left, pad_right, pad_top, pad_bottom = pad_tensor(input)
         gray, pad_left, pad_right, pad_top, pad_bottom = pad_tensor(gray)
         if self.opt.self_attention:
@@ -352,7 +354,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
 			#Bottleneck has been reached - start upsampling
 			# Experiment here to see if bilinear upsampling really is this best option.
             conv5 = F.upsample(conv5, scale_factor=2, mode='bilinear')
-            conv4 = conv4*gray_4 if self.opt.self_attention else conv4
+            conv4 = conv4*gray_4 if self.opt.self_attention else conv4 #This is where we multiply the scaled attention map with upsampled result( at the current stage)
             up6 = torch.cat([self.deconv5(conv5), conv4], 1)
             x = self.bn6_1(self.LReLU6_1(self.conv6_1(up6)))
             conv6 = self.bn6_2(self.LReLU6_2(self.conv6_2(x)))
@@ -375,7 +377,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             x = self.bn9_1(self.LReLU9_1(self.conv9_1(up9)))
             conv9 = self.LReLU9_2(self.conv9_2(x))
 
-            latent = self.conv10(conv9)
+            latent = self.conv10(conv9)# What is this for?
 
             if self.opt.times_residual:# True!
                 latent = latent*gray
@@ -383,7 +385,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             if self.opt.tanh:
                 latent = self.tanh(latent)# Oddly does not apply to us
             if self.skip:
-            	output = latent + input*self.opt.skip
+            	output = latent + input*self.opt.skip# This is a breakthrough! The latent result is multplied with the low-ligt image to form the output.
 
             
         output = pad_tensor_back(output, pad_left, pad_right, pad_top, pad_bottom)
@@ -499,7 +501,7 @@ class PerceptualLoss(nn.Module):
       #print("Im in compute_vgg_loss: Size of target (real_A) %s" % target.size())# The corresponding low-light image that we enhanced
       img_vgg = vgg_preprocess(img, self.opt) # img is fake_B and target being real_A) These are still batches (verified by looking at the parameters of vgg_preprocess.)
       target_vgg = vgg_preprocess(target, self.opt)
-  # For us, the preprocessing is the return the images in the range [0,255] and to be [B,G,R]--> CHECK WHY IS THIS?
+  # For us, the preprocessing is to return the images in the range [0,255] and to be [B,G,R]--> CHECK WHY IS THIS?
 
       img_fea = vgg(img_vgg, self.opt) # This gets the feature map of the enhanced image
       target_fea = vgg(target_vgg, self.opt)# This gets the feature map of the real image (is real the low-light image of the normal light reference image?)

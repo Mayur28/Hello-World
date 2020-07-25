@@ -26,7 +26,22 @@ Understand how the filters, kernels and strides are configured to achieve differ
 
 Check if I should also do some form of data augmentation (removed stuff in get_transform and unaligned_dataset)
 
+Train the model with all the diagnostic printing( sizes of the downsampled attention maps) to understand the model better.
 
+There are 2 pad_tensor functions, remove accordingly!
+
+It appears that the output is formed by multiplying the latent image with the low-light image.
+
+
+FOR TOMORROW:
+START LOOKING AT THE SHADOW REMOVAL METHODS AND DECIPHER WHAT ARE THE ASPECTS THAT ARE REQUIRED TO WORK.
+THOROUGHLY! ( WHOLE DAY!) --> UNDERSTANDING THEORETICALLY AND DIGGING IN THE IMPLEMENTATIONS!
+
+MONDAY:
+READ ENLIGHTEN+ MAJOR SHADOW PAPER
+I NEED TO GO THROUGHT THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY!
+FILTER OUT THE NOTES AND GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
+Check what is going on in backward_G as to how the  loss_G_A is computed (why are they switched?)
 
 My Experimentations:
 
@@ -52,3 +67,5 @@ Try another form of downsampling in the generator( to remove the maxpooling)
 Since I'm assuming that the model is being trained for even darkness, take matters into my own hands and try with my own images to verify!
 
 TRY TO PUT THE BATCH NORMALIZATION BEFORE THE LReLu(MLM says before but many forums found empirically that BN after LReLu performs better)
+
+Get drive pictures to work without visdom!

@@ -52,7 +52,6 @@ class SingleModel(BaseModel):
         self.netG_A = networks.define_G(opt.norm, self.gpu_ids,skip=skip,opt=opt)
         #It looks like they are handling each sub-network as an attribute of 'self'.
         if self.isTrain: #We have this
-            use_sigmoid = opt.no_lsgan# False
             #Below is the global discriminator
 			#Below is correct that we are accepting 'output_nc' which represents a char. of the sample produced by the generator.
             self.netD_A = networks.define_D(opt.n_layers_D, opt.norm, self.gpu_ids)
@@ -71,13 +70,9 @@ class SingleModel(BaseModel):
 
         if self.isTrain:
             self.old_lr = opt.lr
-            self.fake_B_pool = ImagePool(opt.pool_size)# This is just an initializer. sets the number of images in the pool to 50 and create a list for storing the images
+            self.fake_B_pool = ImagePool(opt.pool_size)# This is just an initializer. sets the number of images in the pool to 50 and create a list for storing the images. This is where our results should be stored
             # define loss functions						# Use lsGAN!
             self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor) # Read the note on the LSGAN and MSE loss!
-            if opt.use_mse:
-                self.criterionCycle = torch.nn.MSELoss()#We dont use this surprisingly...
-            else:
-                self.criterionCycle = torch.nn.L1Loss() # We are using L1 loss!?????
             # initialize optimizers
             self.optimizer_G = torch.optim.Adam(self.netG_A.parameters(),lr=opt.lr, betas=(opt.beta1, 0.999))#Generator - should still reflect that its trained through the discriminator. Investigate
             self.optimizer_D_A = torch.optim.Adam(self.netD_A.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))#Global Discriminator
@@ -101,7 +96,7 @@ class SingleModel(BaseModel):
         input_A = input['A' if AtoB else 'B']# We can do this because it is a dictionary!
         input_B = input['B' if AtoB else 'A']
         input_img = input['input_img']
-        input_A_gray = input['A_gray']
+        input_A_gray = input['A_gray'] # Remember that in our confituation, input_img=A
         self.input_A.resize_(input_A.size()).copy_(input_A)
         self.input_A_gray.resize_(input_A_gray.size()).copy_(input_A_gray)
         self.input_B.resize_(input_B.size()).copy_(input_B)
@@ -142,7 +137,6 @@ class SingleModel(BaseModel):
             loss_D_real = self.criterionGAN(pred_real, True)
             loss_D_fake = self.criterionGAN(pred_fake, False)
             loss_D = (loss_D_real + loss_D_fake) * 0.5 # most of the time, we are taking the average loss between the real and fake images
-        # loss_D.backward()
         return loss_D
 
     def backward_D_A(self):
@@ -163,9 +157,11 @@ class SingleModel(BaseModel):
   
     def forward(self): #Produce the fake sample and set the individual patch variable and form the list of patches
         self.real_A = Variable(self.input_A) #Variable is basically a tensor (which represents a node in the comp. graph) and is part of the autograd package to easily compute gradients
-        self.real_B = Variable(self.input_B)
-        self.real_A_gray = Variable(self.input_A_gray)
-        self.real_img = Variable(self.input_img)
+		#Dont be confused my the 'real' appended to the start... real_A is the input_A low-light image
+        self.real_B = Variable(self.input_B)#This contains the normal-light images
+        self.real_A_gray = Variable(self.input_A_gray)# This is the attention map
+        self.real_img = Variable(self.input_img)#In our configuation, input_img=input_A
+		
         #print("Shape of real_A: %s " % self.real_A.size())
         #print("Shape of real_B: %s " % self.real_B.size())
         #print("Shape of real_A_gray: %s " % self.real_A_gray.size())
@@ -173,6 +169,8 @@ class SingleModel(BaseModel):
         
         if self.opt.skip == 1: # This sort of makes sense, but where does the latent stuff fit in.
             self.fake_B, self.latent_real_A = self.netG_A.forward(self.real_img, self.real_A_gray)# Ive got an idea of whats going on here. Fake_B stores our fake samples( our result). As seen a little later, this will be (one of) the input to the discriminator 
+			
+			#We feed the generator the low-light image and the attention map!
 
         if self.opt.patchD:
 			#Here, we are finding the random patches
@@ -209,7 +207,7 @@ class SingleModel(BaseModel):
 
 
     def backward_G(self, epoch):
-        pred_fake = self.netD_A.forward(self.fake_B)# Our predictions on the fake samples
+        pred_fake = self.netD_A.forward(self.fake_B)# Our predictions on the fake samples... Tracing is pretty useless as it just passes through to a defined Sequential model.
 
         if self.opt.use_ragan:
 			#Leave our predictions of our fake samples aside and make predictions on the real samples first.
@@ -218,15 +216,19 @@ class SingleModel(BaseModel):
 			#CONFIRM THE SWITCHING STORY!!!
             self.loss_G_A = (self.criterionGAN(pred_real - torch.mean(pred_fake), False) +
                                       self.criterionGAN(pred_fake - torch.mean(pred_real), True)) / 2
+			
 			#The generator's loss is taken to be the average of the discriminator's performance on the real and fake sets
 			# The boolean is used to indicate whether the target is real or not.
 			#criterionGAN is actually an instance of the GANloss class. Above, we are in fact calling the __call__ function which calls the 'get_target_tensor' which makes sense now. It is this function that accepts 'input' and a 'is_target_real' parameter.
         loss_G_A = 0
+		
+		# This distinction is understood
         if self.opt.patchD:# Predict the individual path (not the list)
             pred_fake_patch = self.netD_P.forward(self.fake_patch)# The single patch, not the list.
             if self.opt.hybrid_loss:# We use this, but what makes it hybrid?
                 loss_G_A += self.criterionGAN(pred_fake_patch, True)# The True represents the 'target is real' label. I believe this is where we do the 'TRICK'.
-				
+		
+		#This distinction is understood
         if self.opt.patchD_3 > 0:# Discriminate our list of patches
             for i in range(self.opt.patchD_3):
                 pred_fake_patch_1 = self.netD_P.forward(self.fake_patch_1[i])# This indexing makes sense
@@ -244,6 +246,8 @@ class SingleModel(BaseModel):
             vgg_w = 1 # The loss_vgg_b is very important because it is this variable that we add to the gan loss to compute the total loss of the generator.
         if self.opt.vgg > 0: #vgg_loss is actually an instance of the Perceptual loss class.
 			#self.vgg is the actual vgg model that we loaded, not to be confused with a scalar variable
+			
+			#The line below if for computing the perceptual loss (the mean difference between the feature maps)
             self.loss_vgg_b = self.vgg_loss.compute_vgg_loss(self.vgg,
                     self.fake_B, self.real_A) * self.opt.vgg if self.opt.vgg > 0 else 0 # The if statement and the self.opt.vgg seem very redundant. It coult be to force the result to be a scalar as Turgay used to do.
 			#The above statement calculates the vgg loss of the whole images
@@ -271,9 +275,13 @@ class SingleModel(BaseModel):
     def optimize_parameters(self, epoch): #Do the forward,backprop and update the weights... this is a very powerful and 'highly abstracted' function
         # forward
         self.forward()# This only does the generator--> It's fine. The discriminator's influence should be accounted for in the backward pass
+		
+		#In the forward function, we forward propagate the low-light image and start preparing the patch and the list of patches
         self.optimizer_G.zero_grad()#<-- This is extremely important and needs to be performed before we do anything related to updating the weights
         self.backward_G(epoch)# This is the function where we passed the syn. samples and real images (along with the samples to the disc. --> This also calculated the GANLoss and the VGG loss... INDIRECTLY, THIS REPRESENTS THE FULL PASS OF THE GRAND NETWORK USED TO UPDATE THE GENERATOR) Calculate the updated gradients. Accepting epoches is quite useless since we just check if epoch<0 to set 1 variable ( I dont see when would epoch ever be < 0???)
         self.optimizer_G.step()# Update the actual weights
+		
+		#We first get the operations of the generator out of the way before we work on the discriminator.
 		
         # D_A
         self.optimizer_D_A.zero_grad()#--> This is crucial!
