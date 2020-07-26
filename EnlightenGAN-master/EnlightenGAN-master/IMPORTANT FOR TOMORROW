@@ -1,89 +1,98 @@
-Where does the perceptual loss fit in
-I see where we are calculating the attention map but I dont see where are we using it. A) When upsampling in the generator, we are also resizing them to match the feature map sizes.
+Notes
 
-Add print statements to the __getitems__ functions (especially the one that is used to create a dictionary containing the dataset). This is because the dictionary is only created in the __getitem__ function which does not seem to be explicitly called.
-
-Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
-
-In the long term, I may need to compile better datasets. I dont think training for the 2 roles simulataneously is a viable solution
-
-Try to display the many aspects within the generator when doing a forward pass (what do the many resized attention maps or the latent result look like before any further processing)
-
-FIND A BETTER STRATEGY TO TRAIN FOR THE 2 TASKS
-
-Confirm the switching of labels in the backward_G function
-
-
-Find a way to display the images so that I can see what is input_A, input_B and input_img
-Understand how the filters, kernels and strides are configured to achieve different things
-
-Check if I should also do some form of data augmentation (removed stuff in get_transform and unaligned_dataset)
-
-Train the model with all the diagnostic printing( sizes of the downsampled attention maps) to understand the model better.
-
-There are 2 pad_tensor functions, remove accordingly!
-
-It appears that the output is formed by multiplying the latent image with the low-light image.
-
-As an experiment, I have trained the model only on the shadow data. Training takes longer since there are more iterations per epoch( because of a larger dataset). It seems to be learning quite slowly but is definitely lightening the shadows. Later, I could increase the learning rate slightly!
-
-For the report, I should definitely include a diagram of the architecture since she specifically asked for it ( but it needs to be indistinguishable from Enlighten-GAN!)
-In my report, I should show off that I dont need anything too dramatic for shadow detection (like ST-CGAN that dedicates an entire GAN for it)
-
-Focus on my aspect of the shadow DETECTION  problem as some implementations make a big deal about it.
+- As an experiment, I have trained the model only on the shadow data. Training takes longer since there are more iterations per epoch( because of a larger dataset). It seems to be learning quite slowly but is definitely lightening the shadows. Later, I could increase the learning rate slightly! Not feasible and at best, it lightens the shadow but never removes the shadow completely.
+- Note the pattern for the number of filters used in the generator, when downsampling, the number of filters doubles. When upsampling, the number of filters is halved. Additionally, The number of filters is equal in mirrored layers (for example. the first layer has the sample number of filters as the last layer.)
+- Very important, we do not perform normalization in the first layer of the generator. (needs to be accounted for seperately, the rest can be produced algorithmically)--> EGAN has an extra layer and does not use normalization which shouldn't primarily determine the performance of the entire algorithm.
+- If I'm going to use the binary mask implementation, make sure to use the DIP noise removal technique! The speckles are problematic.
+- My understanding of EGAN is slightly flawed. I thought EGAN primarily uses instance normalization which isnt the case. Instead, it primarily uses batch norm but uses instance norm before the VGG for stability
+- The discriminator is built algorithmically by defining a batch and using it as many times that is specified(n_layers_D)
+- The dataloader loads the data into batches ( and pretty much handles all the data handling) by using the GPU. LOOK INTO THE DATALOADER STUFF THOROUGHLY!! To use the dataloader stuff, it is compulsory to implement the __getitem__ and __len__ magic functions
+- The 'data' training loop is a dictionary where each element is a tensor (with dimensions 16x3xsizexsize). These tensors represent A,B,input_A_gray and input_imgs. It also stores 'A_paths' which is the path to the training images accessed in that batch. Go deeper into how this dictionary is actually formed using the data loader.
+- Remember, single model is the grand network which contains the generator and the discriminator. (we are working with an instance of 'single model'). That is why in 'optimize_parameters', we only calling forward() once which will propagate through the generator and the discriminator.  Note that we are doing the alternating training batches thing as mentioned by Radford.
+- The __getitems__ function in unaligned_dataset is called each iteration and is used to form the dictionary form of the batch with the A,B,input image and attention map!
+I changed DataParallel (towards the end of the definition of the generator and the discriminator) because at the moment, I'm only using one GPU.This function basically chunks the input across all the GPU's (uncomment if Shun makes a plan)
+- When they say that they concatenate and reshaping the attention maps to the filter size, we actually do this in the decoder( get multiplied when we are upsampling)
+- The trend is to first create an instance of the class, then immediately call the initialize class.
+- I should get the structuring (file tree) like them to easily retrieve the data.
+- A is the dark images and B is the bright (reference images)
+When I want to see the latent stuff, the attention map and the patchs, uncomment the original dictionary setting.
+- It appears that the output is formed by multiplying the latent image with the low-light image.
+- Mask- Shadow GAN has it like original paper (opposite to EGAN) : They put Norm. before Relu????
+- Mask-Shadow GAN's 2 generators are identical except for 1 line where we need to account for the mask being concatenated with the input RGB image
+- The LSGAN can be implemented by using the target values of 1.0 for real and 0.0 for fake images and optimizing the model using the mean squared error (MSE) loss function, e.g. L2 loss. The output layer of the discriminator model must be a linear activation function.
 
 
-FOR TOMORROW:
-START LOOKING AT THE SHADOW REMOVAL METHODS AND DECIPHER WHAT ARE THE ASPECTS THAT ARE REQUIRED TO WORK.
-THOROUGHLY! ( WHOLE DAY!) --> UNDERSTANDING THEORETICALLY AND DIGGING IN THE IMPLEMENTATIONS!
-Look into what is the best way to trai the network to perform 2 different tasks whilst being efficient and effective at both tasks (without conflicting with each other)
 
 
-MONDAY:
-READ ENLIGHTEN
-For some reason, I've added sigmoide on my own? Investigate
-I NEED TO GO THROUGHT THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY!
-FILTER OUT THE NOTES AND GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
-Check what is going on in backward_G as to how the  loss_G_A is computed (why are they switched?)
-Where are acknowledging that skip connections are used, but it doesnt seem as if we are actually including any information in the attention modules(<-- what EGAN calls it)
+Questions
+- Where does the perceptual loss fit in?
+- I see where we are calculating the attention map but I dont see where are we using it. A) When upsampling in the generator, we are also resizing them to match the feature map sizes.
+- Understand how the filters, kernels and strides are configured to achieve different things (In our case, it is just a matter of doubling the number of filters compared to the previous layer and vice versa when upsampling.)
+- How are we enforcing that the range of the generator's output is between [-1, 1]?
+- Find out the following from Richard: Find out the following: Its usually Conv->Batch-> Relu but here its Conv-> Relu->Batch. Answer! MLM states that this is not an issue. Org. paper has it like normal but experimentation revealed that better perf.
+is achieved if placed after the activation layer. If possible, try to test both!
+- Why do many of the classes accept a parameter? An example being the unaligned_dataset class in unaligned_dataset.py
+- In vgg_preprocess, why are the colour channels reversed?
 
-Note the pattern for the number of filters used in the generator, when downsampling, the number of filters doubles. When upsampling, the number of filters is halved. Additionally, The number of filters is equal in mirrored layers (for example. the first layer has the sample number of filters as the last layer.)
 
-Find a way to do erosion and dilation to the attention map. Try doing these operations before adding to tensor but the noise removal will probably be expensive.
+To Do List
+- Mask-Shadow GAN uses tanh on the output of the generator. ( But are they using LSGAN -> yes). Try to include in my implementation?
+- Be careful where we need to set eval and test/train!
+- Read up on the LSGAN loss! (Read MLM's article on LSGAN
+) Very Important!!!
+- I MUST BLEND WITH THE PyTorch DCGAN EXAMPLE AND CHECK THE OVERLAPS AND DISPARITIES
+- Check what size images we are working with. The paper and dataset reflects 600x400 but the processing seems to account for 320x320
+
+- Add print statements to the __getitems__ functions (especially the one that is used to create a dictionary containing the dataset). This is because the dictionary is only created in the __getitem__ function which does not seem to be explicitly called.
+- In the long term, I may need to compile better datasets. I dont think training for the 2 roles simulataneously is a viable solution. FIND A BETTER STRATEGY TO TRAIN FOR THE 2 TASKS
+- Train the model with all the diagnostic printing( sizes of the downsampled attention maps) to understand the model better.
+
+- Try to display the many aspects within the generator when doing a forward pass (what do the many resized attention maps or the latent result look like before any further processing)
+
+
+Tomorrow To Do List:
+- Fix CV thoroughly, it's just the probability value stuff, the ROC and my other questions.
+- Confirm the story of switching the labels in backward_G!
+- Search and remove fcn stuff
+- Go through opt and filter out all the useless parameters
+- Check if there is a resize function in single_model.py
+- Investigate this statement: Remove the redundant down sample in the generator
+- Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
+- Confirm the switching of labels in the backward_G function
+- There are 2 pad_tensor functions, remove accordingly!
+- It appears that the output is formed by multiplying the latent image with the low-light image. (Verify this!)
+- READ ENLIGHTEN
+- For some reason, I've added sigmoid on my own? Investigate
+- I NEED TO GO THROUGHT THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY!
+- FILTER OUT THE NOTES AND GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
+- Check what is going on in backward_G as to how the  loss_G_A is computed (why are they switched?)
+- Where are acknowledging that skip connections are used, but it doesnt seem as if we are actually including any information in the attention modules(<-- what EGAN calls it)
+- Check what is the purpose of the latent result
+- I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate.
+- Get drive pictures to work without visdom! Thereafter, check if the implementation works with the new version of pyTorch
+- For some reason, we dont ever set the discriminators to trainable?
+- Consider removing the pool stuff in the backward pass of the discriminator
+
 My Experimentations:
+- Read sebaa for handling the data properly
+- To upsample in the generator, try the transpose convolutional layer
+- Check what happens if I remove the resize in the set_input function (single model.py)
+- Its okay if our training results seem small because for the prediction process, the original size is maintained.
+- Try to filter out line 265 in single_model.py. It seems to me that many aspects are redundant.
+- Try another form of downsampling in the generator( to remove the maxpooling)
+- Since I'm assuming that the model is being trained for even darkness, take matters into my own hands and try with my own images to verify!
+-TRY TO PUT THE BATCH NORMALIZATION BEFORE THE LReLu(MLM says before but many forums found empirically that BN after LReLu performs better)
+- See what happens if we dont decay the learning rate after 100 epochs
+- For my experiment on batch vs instance normalization, there is a dedicated function (nn.InstanceNorm2d(in_features)--> Look into it more!)
+-DO NOT MESS WITH THE DISCRIMINATOR, THE DISCRIMINATOR IS THE GOSPEL TRUTH (EGAN AND MSG have the same form of discriminator.)
 
-I MUST BLEND WITH THE PyTorch DCGAN EXAMPLE AND CHECK THE OVERLAPS AND DISPARITIES
+- (Outcome Pending) It is what it is when I train one after another but tell them its the conflicting between the 2. Its not the architecture since most shadow removals use my architecture. Show when trained seperately and bring it to Hairong's attention. She said herself to train sequentially!
+- I see that they are using maxpooling, I should see if I can instead use the transpose_conv to down sample(This move is backed by Radford)
 
-Read sebaa for handling the data properly
-Remove the redundant down sample in the generator
-To upsample in the generator, try the transpose convolutional layer
-Instead of setting the resize_or_crop to the default being crop, try resize
-Check what happens if I remove the resize in the set_input function (single model.py)
-To make	 life fair, I should try and form my own datasets that conduces what I'm doing
-Check what is the purpose of the latent result
-Its okay if our training results seem small because for their prediction process, the original size is maintained.
-Try to filter out line 265 in single_model.py. It seems to me that many aspects are redundant.
-
-I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate.
-
-Try to find out why did they train with the images flipped?
-
-Go through opt and filter out all the useless parameters
-Try another form of downsampling in the generator( to remove the maxpooling)
-
-Since I'm assuming that the model is being trained for even darkness, take matters into my own hands and try with my own images to verify!
-
-TRY TO PUT THE BATCH NORMALIZATION BEFORE THE LReLu(MLM says before but many forums found empirically that BN after LReLu performs better)
-
-Get drive pictures to work without visdom!
-
-See what happens if we dont decay the learning rate after 100 epochs
-For my experiment on batch vs instance normalization, there is a dedicated function (nn.InstanceNorm2d(in_features)--> Look into it more!)
-
-DO NOT MESS WITH THE DISCRIMINATOR, THE DISCRIMINATOR IS THE GOSPEL TRUTH (EGAN AND MSG have the same form of discriminator.)
-
-Very important, we do not perform normalization in the first layer of the generator. (needs to be accounted for seperately, the rest can be produced algorithmically)--> EGAN has an extra layer and does not use normalization which shouldn't primarily determine the performance of the entire algorithm.
-
-If I'm going to use the binary mask implementation, make sure to use the DIP noise removal technique! The speckles are problematic.
-
-After removing the visdom dependencies, check if the implementation works with the new version of pyTorch
+Notes for the Report:
+- For the report, I should definitely include a diagram of the architecture since she specifically asked for it ( but it needs to be indistinguishable from Enlighten-GAN!)
+- (Outcome pending on this) In my report, I should show off that I dont need anything too dramatic for shadow detection (like ST-CGAN that dedicates an entire GAN for it)
+- (Outcome pending) Focus on my aspect of the shadow DETECTION problem as some implementations make a big deal about it.
+- (Outcome pending) Find a way to do erosion and dilation to the attention map. Try doing these operations before adding to tensor but the noise removal will probably be expensive.
+- When writing the report, describe how the data is pre-processed!
+- In my write-up make sure I mention that Im using LSGAN loss and explain it. In the discriminator, instead of just being right or wrong, it tells how right or wrong we are.
