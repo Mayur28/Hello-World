@@ -69,3 +69,5 @@ Since I'm assuming that the model is being trained for even darkness, take matte
 TRY TO PUT THE BATCH NORMALIZATION BEFORE THE LReLu(MLM says before but many forums found empirically that BN after LReLu performs better)
 
 Get drive pictures to work without visdom!
+
+See what happens if we dont decay the learning rate after 100 epochs
