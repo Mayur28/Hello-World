@@ -85,3 +85,5 @@ DO NOT MESS WITH THE DISCRIMINATOR, THE DISCRIMINATOR IS THE GOSPEL TRUTH (EGAN 
 Very important, we do not perform normalization in the first layer of the generator. (needs to be accounted for seperately, the rest can be produced algorithmically)--> EGAN has an extra layer and does not use normalization which shouldn't primarily determine the performance of the entire algorithm.
 
 If I'm going to use the binary mask implementation, make sure to use the DIP noise removal technique! The speckles are problematic.
+
+After removing the visdom dependencies, check if the implementation works with the new version of pyTorch

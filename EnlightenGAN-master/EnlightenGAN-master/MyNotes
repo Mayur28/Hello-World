@@ -154,3 +154,4 @@ In my write-up make sure I mention that Im using LSGAN loss and explain it. In t
 
 The LSGAN can be implemented by using the target values of 1.0 for real and 0.0 for fake images and optimizing the model using the mean squared error (MSE) loss function, e.g. L2 loss. The output layer of the discriminator model must be a linear activation function.
 
+Read MLM's article on LSGAN
