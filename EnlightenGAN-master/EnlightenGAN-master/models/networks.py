@@ -198,7 +198,7 @@ class NoNormDiscriminator(nn.Module):
         ]
 
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
-        sequence += [nn.Sigmoid()]
+        #sequence += [nn.Sigmoid()]#<--- Needs to be remove if sticking to default setting!
 
         self.model = nn.Sequential(*sequence)
 

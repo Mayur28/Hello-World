@@ -142,3 +142,15 @@ When I want to see the latent stuff, the attention map and the patchs, uncomment
 When writing the report, describe how the data is pre-processed!
 
 It appears that the output is formed by multiplying the latent image with the low-light image.
+
+Mask-Shadow GAN uses tanh on the output of the generator.
+Mask ShadowGAN uses a fully connected network at the output of the discriminator 
+Mask- Shadow GAN has it like original paper (opposite to EGAN) : They put Norm. before Relu????
+
+Mask-Shadow GAN's 2 generators are identical except for 1 line where we need to account for the mask being concatenated with the input RGB image
+
+In my write-up make sure I mention that Im using LSGAN loss and explain it. In the discriminator, instead of just being right or wrong, it tells how right or wrong we are.
+
+
+The LSGAN can be implemented by using the target values of 1.0 for real and 0.0 for fake images and optimizing the model using the mean squared error (MSE) loss function, e.g. L2 loss. The output layer of the discriminator model must be a linear activation function.
+
