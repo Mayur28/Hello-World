@@ -14,9 +14,9 @@ import torch.nn.init as init
 # |imtype|: the desired type of the converted numpy array
 def tensor2im(image_tensor, imtype=np.uint8):
     image_numpy = image_tensor[0].cpu().float().numpy()
+    #The transpose isnt changing the dimensions
     image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0
-    image_numpy = np.maximum(image_numpy, 0)
-    image_numpy = np.minimum(image_numpy, 255)
+    image_numpy = np.clip(image_numpy, 0,255)
     return image_numpy.astype(imtype)
 
 def atten2im(image_tensor, imtype=np.uint8):
@@ -31,8 +31,7 @@ def latent2im(image_tensor, imtype=np.uint8):
     # image_tensor = (image_tensor - torch.min(image_tensor))/(torch.max(image_tensor)-torch.min(image_tensor))
     image_numpy = image_tensor[0].cpu().float().numpy()
     image_numpy = (np.transpose(image_numpy, (1, 2, 0))) * 255.0
-    image_numpy = np.maximum(image_numpy, 0)
-    image_numpy = np.minimum(image_numpy, 255)
+    image_numpy = np.clip(image_numpy,0,255)
     return image_numpy.astype(imtype)
 
 def max2im(image_1, image_2, imtype=np.uint8):
@@ -133,50 +132,3 @@ def load_vgg16(model_dir):
     vgg = Vgg16()
     vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))
     return vgg
-
-
-def vgg_preprocess(batch):
-    tensortype = type(batch.data)
-    (r, g, b) = torch.chunk(batch, 3, dim = 1)
-    batch = torch.cat((b, g, r), dim = 1) # convert RGB to BGR
-    batch = (batch + 1) * 255 * 0.5 # [-1, 1] -> [0, 255]
-    mean = tensortype(batch.data.size())
-    mean[:, 0, :, :] = 103.939
-    mean[:, 1, :, :] = 116.779
-    mean[:, 2, :, :] = 123.680
-    batch = batch.sub(Variable(mean)) # subtract mean
-    return batch
-
-
-def get_scheduler(optimizer, hyperparameters, iterations=-1):
-    if 'lr_policy' not in hyperparameters or hyperparameters['lr_policy'] == 'constant':
-        scheduler = None # constant scheduler
-    elif hyperparameters['lr_policy'] == 'step':
-        scheduler = lr_scheduler.StepLR(optimizer, step_size=hyperparameters['step_size'],
-                                        gamma=hyperparameters['gamma'], last_epoch=iterations)
-    else:
-        return NotImplementedError('learning rate policy [%s] is not implemented', hyperparameters['lr_policy'])
-    return scheduler
-
-
-def weights_init(init_type='gaussian'):
-    def init_fun(m):
-        classname = m.__class__.__name__
-        if (classname.find('Conv') == 0 or classname.find('Linear') == 0) and hasattr(m, 'weight'):
-            # print m.__class__.__name__
-            if init_type == 'gaussian':
-                init.normal(m.weight.data, 0.0, 0.02)
-            elif init_type == 'xavier':
-                init.xavier_normal(m.weight.data, gain=math.sqrt(2))
-            elif init_type == 'kaiming':
-                init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
-            elif init_type == 'orthogonal':
-                init.orthogonal(m.weight.data, gain=math.sqrt(2))
-            elif init_type == 'default':
-                pass
-            else:
-                assert 0, "Unsupported initialization: {}".format(init_type)
-            if hasattr(m, 'bias') and m.bias is not None:
-                init.constant(m.bias.data, 0.0)
-
-    return init_fun

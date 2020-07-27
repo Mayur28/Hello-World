@@ -30,7 +30,8 @@ class Visualizer():
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
                 util.save_image(image_numpy, img_path)
            
-	"""
+	  
+    """
     # errors: dictionary of error labels and values
     def plot_current_errors(self, epoch, counter_ratio, opt, errors):
         if not hasattr(self, 'plot_data'):
@@ -46,7 +47,7 @@ class Visualizer():
                 'xlabel': 'epoch',
                 'ylabel': 'loss'},
             win=self.display_id)
-	"""
+	  """
 
     # errors: same format as |errors| of plotCurrentErrors
     def print_current_errors(self, epoch, i, errors, t):

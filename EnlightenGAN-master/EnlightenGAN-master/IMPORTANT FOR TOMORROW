@@ -21,6 +21,9 @@ When I want to see the latent stuff, the attention map and the patchs, uncomment
 - Mask-Shadow GAN's 2 generators are identical except for 1 line where we need to account for the mask being concatenated with the input RGB image
 - The LSGAN can be implemented by using the target values of 1.0 for real and 0.0 for fake images and optimizing the model using the mean squared error (MSE) loss function, e.g. L2 loss. The output layer of the discriminator model must be a linear activation function.
 - Check if there is a resize function in single_model.py ( There isn't in the entire project. Note that looking at the base_dataset, it accepts torch.utils.data which is built-in and explicitly specifies that egt_im and len need to be overwritten). the 'resize_' function is a built-in tensor function.
+- There's actually a tensor to image function (but they implemented it in utils)
+- Via tracing, it is deduced that the latent thing is related to having skip connections.
+
 
 
 
@@ -34,44 +37,46 @@ Questions
 is achieved if placed after the activation layer. If possible, try to test both!
 - Why do many of the classes accept a parameter? An example being the unaligned_dataset class in unaligned_dataset.py
 - In vgg_preprocess, why are the colour channels reversed?
+- I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate. We dont, but investigate how is a result produced if we do not forward propagate?
 
 
 To Do List
+- It seems that only when training the generator do we swap the label!
+- There is a slight contradiction, (CONFIRM THIS) radford states that the output layer of the discriminator must be a sigmoid layer(thus a prediction in [-1,1]) but MLM says that an LSGAN has a output layer with a linear activation layer???
+- Remember that Radford recommends strided convolution to downsample instead of EGAN's max pooling. MSG uses strided convolution( they definitely followed Radford's guidance)
+- Apparently Radford puts the BatchNorm straight after the conv layer, EGAN does conv -> LRelu then BN!.
+- CHECK THE NORMALIZATION STORY IN THE DISCRIMINATOR
+- DCGAN tutorial has Leaky ReLu in the discriminator and Relu in the generator(<-- This is what MSG has but EGAN doesnt)
+- Read Radford for guidance
+-EXPERIMENT WITH ACTUAL ENLIGHTEN-GAN AND TWEAK THE TRAIN_OPTIONS AND SCRIPT OPTIONS TO GET A REAL FEEL!
+--- THIS IS FISHY AND INVESTIGATE FROM THE START- We  are acknowledging that skip connections are used, but it doesnt seem as if we are actually including any information in the attention modules. ALSO LOOK INTO THE PATCHGAN STUFF.
 - Mask-Shadow GAN uses tanh on the output of the generator. ( But are they using LSGAN -> yes). Try to include in my implementation?
 - Be careful where we need to set eval and test/train!
-- Read up on the LSGAN loss! (Read MLM's article on LSGAN
-) Very Important!!!
+- Read up on the LSGAN loss! (Read MLM's article on LSGAN) Very Important!!!
 - I MUST BLEND WITH THE PyTorch DCGAN EXAMPLE AND CHECK THE OVERLAPS AND DISPARITIES
 - Check what size images we are working with. The paper and dataset reflects 600x400 but the processing seems to account for 320x320
-
 - Add print statements to the __getitems__ functions (especially the one that is used to create a dictionary containing the dataset). This is because the dictionary is only created in the __getitem__ function which does not seem to be explicitly called.
 - In the long term, I may need to compile better datasets. I dont think training for the 2 roles simulataneously is a viable solution. FIND A BETTER STRATEGY TO TRAIN FOR THE 2 TASKS
 - Train the model with all the diagnostic printing( sizes of the downsampled attention maps) to understand the model better.
-
 - Try to display the many aspects within the generator when doing a forward pass (what do the many resized attention maps or the latent result look like before any further processing)
 
 
 Tomorrow To Do List:
-- Start finding out from ___(Wesley) how to configure the cluster for the research.
+
+
+
+- I NEED TO GO THROUGH THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY! Check what is going on in backward_G as to how the loss_G_A is computed (why are they switched?)
+-  GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
+- For some reason, we dont ever set the discriminators to trainable?-> Should be by default, what brought about the doubt? The doubt came from the 'Network Initialized' section of single model. We are setting the generator to trainable or eval depending on if we are training or not (opt.Train)
 
 - Confirm the story of switching the labels in backward_G!
-- Go through opt and filter out all the useless parameters
+- Try to fix the latent stuff and understand it properly! --> where all the manipulations are happening and duplicate before proceeding...
 
-- Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
-- Confirm the switching of labels in the backward_G function
-- It appears that the output is formed by multiplying the latent image with the low-light image. (Verify this!)
-- READ ENLIGHTEN
-- I NEED TO GO THROUGH THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY!
--  GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
-- Check what is going on in backward_G as to how the  loss_G_A is computed (why are they switched?)
-- Where are acknowledging that skip connections are used, but it doesnt seem as if we are actually including any information in the attention modules(<-- what EGAN calls it)
-- Check what is the purpose of the latent result
-- I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate. We dont, but investigate how is a result produced if we do not forward propagate
-- Get drive pictures to work without visdom! Thereafter, check if the implementation works with the new version of pyTorch
-- For some reason, we dont ever set the discriminators to trainable?
-- Consider removing the pool stuff in the backward pass of the discriminator
 
 My Experimentations:
+- I NEED TO DO THE SELF.OPT ROOT! EGAN AND MSG DO IT! 
+READ FROM OTHER SOURCES( LEGEND HAS IT) THEN USE EGAN AS A BACKUP!
+Set targets, do independently as hard as possible and do corrections at 6:30 only on the things that I did on that day
 - Read sebaa for handling the data properly
 - To upsample in the generator, try the transpose convolutional layer
 - Check what happens if I remove the resize in the set_input function (single model.py)
@@ -84,10 +89,18 @@ My Experimentations:
 - For my experiment on batch vs instance normalization, there is a dedicated function (nn.InstanceNorm2d(in_features)--> Look into it more!)
 -DO NOT MESS WITH THE DISCRIMINATOR, THE DISCRIMINATOR IS THE GOSPEL TRUTH (EGAN AND MSG have the same form of discriminator.)
 
-- (Outcome Pending) It is what it is when I train one after another but tell them its the conflicting between the 2. Its not the architecture since most shadow removals use my architecture. Show when trained seperately and bring it to Hairong's attention. She said herself to train sequentially!
-- I see that they are using maxpooling, I should see if I can instead use the transpose_conv to down sample(This move is backed by Radford)
+
+
+Fancy stuff
+- Start finding out from ___(Wesley) how to configure the cluster for the research.
+- Check what are the results when a proper Unet generator is used.
+- I really need to experiment with Unet and using the skip connections properly!--> Revive the parts that I will then be needing (in the event)
+- But MaskShadowGAN also says that they use a U-net generator but do something else? CHECK WHAT IS THE EXACT DEFINITION OF A U-NET GENERATOR( DONT TAKE SHORTCUTS, THEY DO HAVE RESIDUAL BLOCKS!).
+- Read if PatchGAN implementation uses normalization or not.
+-MaskShadowGAN says that they are using a PatchGAN but they are using instance normalization.
 
 Notes for the Report:
+- Make sure that I'm not always phreasing my work in terms of EGAN, I am my own legal entity and the reader shouldn't even know about EGAN unless I say so.
 - For the report, I should definitely include a diagram of the architecture since she specifically asked for it ( but it needs to be indistinguishable from Enlighten-GAN!)
 - (Outcome pending on this) In my report, I should show off that I dont need anything too dramatic for shadow detection (like ST-CGAN that dedicates an entire GAN for it)
 - (Outcome pending) Focus on my aspect of the shadow DETECTION problem as some implementations make a big deal about it.

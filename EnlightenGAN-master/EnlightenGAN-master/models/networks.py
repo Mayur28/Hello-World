@@ -216,46 +216,54 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             self.downsample_2 = nn.MaxPool2d(2)
             self.downsample_3 = nn.MaxPool2d(2)
             self.downsample_4 = nn.MaxPool2d(2)
-        else:
-            self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
-			
-        self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn1_1 = nn.BatchNorm2d(32)
+        else: #I'VE ADD THE IF STATEMENTS AGAIN SO THAT i CAN DECIDE WHETHER I WANT INSTANCE OR BATCH NORMALIZATION
+			self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
+        if self.opt.use_norm == 1:
+            self.bn1_1 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU1_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn1_2 = nn.BatchNorm2d(32)	
-        self.max_pool1 =  nn.MaxPool2d(2) 
+        if self.opt.use_norm == 1:
+            self.bn1_2 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
+        self.max_pool1 = nn.AvgPool2d(2) if self.opt.use_avgpool == 1 else nn.MaxPool2d(2)
 
         self.conv2_1 = nn.Conv2d(32, 64, 3, padding=p)
         self.LReLU2_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn2_1 = nn.BatchNorm2d(64)
+        if self.opt.use_norm == 1:
+            self.bn2_1 = SynBN2d(64) if self.opt.syn_norm else nn.BatchNorm2d(64)
         self.conv2_2 = nn.Conv2d(64, 64, 3, padding=p)
         self.LReLU2_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn2_2 = nn.BatchNorm2d(64)
-        self.max_pool2 =  nn.MaxPool2d(2)
+        if self.opt.use_norm == 1:
+            self.bn2_2 = SynBN2d(64) if self.opt.syn_norm else nn.BatchNorm2d(64)
+        self.max_pool2 = nn.AvgPool2d(2) if self.opt.use_avgpool == 1 else nn.MaxPool2d(2)
 
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=p)
         self.LReLU3_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn3_1 = nn.BatchNorm2d(128)
+        if self.opt.use_norm == 1:
+            self.bn3_1 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
         self.conv3_2 = nn.Conv2d(128, 128, 3, padding=p)
         self.LReLU3_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn3_2 = nn.BatchNorm2d(128)
-        self.max_pool3 = nn.MaxPool2d(2)
+  		if self.opt.use_norm == 1:
+            self.bn3_2 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
+        self.max_pool3 = nn.AvgPool2d(2) if self.opt.use_avgpool == 1 else nn.MaxPool2d(2)
 
         self.conv4_1 = nn.Conv2d(128, 256, 3, padding=p)
         self.LReLU4_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn4_1 = nn.BatchNorm2d(256)
+        if self.opt.use_norm == 1:
+            self.bn4_1 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
         self.conv4_2 = nn.Conv2d(256, 256, 3, padding=p)
         self.LReLU4_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn4_2 = nn.BatchNorm2d(256)
-        self.max_pool4 = nn.MaxPool2d(2)
+        if self.opt.use_norm == 1:
+            self.bn4_2 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
+        self.max_pool4 = nn.AvgPool2d(2) if self.opt.use_avgpool == 1 else nn.MaxPool2d(2)
 
         self.conv5_1 = nn.Conv2d(256, 512, 3, padding=p)
         self.LReLU5_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn5_1 = nn.BatchNorm2d(512)
+        if self.opt.use_norm == 1:
+            self.bn5_1 = SynBN2d(512) if self.opt.syn_norm else nn.BatchNorm2d(512)
         self.conv5_2 = nn.Conv2d(512, 512, 3, padding=p)
         self.LReLU5_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn5_2 = nn.BatchNorm2d(512)
+        if self.opt.use_norm == 1:
+            self.bn5_2 = SynBN2d(512) if self.opt.syn_norm else nn.BatchNorm2d(512)
 		
 		#We are just setting variables, but where are we actually stating that they are part of the model? Right now, it seems I could be creating arbitrary models.
 
@@ -265,34 +273,41 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.deconv5 = nn.Conv2d(512, 256, 3, padding=p)#This is apparently referred to as a bilinear upsampling layer.(According to the paper). This apparently gets rid of checkerboard effects
         self.conv6_1 = nn.Conv2d(512, 256, 3, padding=p)# Try to get an intuition of how the no. of filters,kernel_size and strides are configured to achieve different characteristics
         self.LReLU6_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn6_1 = nn.BatchNorm2d(256)
+ 		if self.opt.use_norm == 1:
+            self.bn6_1 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
         self.conv6_2 = nn.Conv2d(256, 256, 3, padding=p)
         self.LReLU6_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn6_2 =  nn.BatchNorm2d(256)
+        if self.opt.use_norm == 1:
+            self.bn6_2 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
 
         # self.deconv6 = nn.ConvTranspose2d(256, 128, 2, stride=2)
         self.deconv6 = nn.Conv2d(256, 128, 3, padding=p)
         self.conv7_1 = nn.Conv2d(256, 128, 3, padding=p)
         self.LReLU7_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn7_1 =  nn.BatchNorm2d(128)
+        if self.opt.use_norm == 1:
+            self.bn7_1 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
         self.conv7_2 = nn.Conv2d(128, 128, 3, padding=p)
         self.LReLU7_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn7_2 = nn.BatchNorm2d(128)
+        if self.opt.use_norm == 1:
+            self.bn7_2 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
 
         # self.deconv7 = nn.ConvTranspose2d(128, 64, 2, stride=2)
         self.deconv7 = nn.Conv2d(128, 64, 3, padding=p)
         self.conv8_1 = nn.Conv2d(128, 64, 3, padding=p)
         self.LReLU8_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn8_1 = nn.BatchNorm2d(64)
+        if self.opt.use_norm == 1:
+            self.bn8_1 = SynBN2d(64) if self.opt.syn_norm else nn.BatchNorm2d(64)
         self.conv8_2 = nn.Conv2d(64, 64, 3, padding=p)
         self.LReLU8_2 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn8_2 = nn.BatchNorm2d(64)
+        if self.opt.use_norm == 1:
+            self.bn8_2 = SynBN2d(64) if self.opt.syn_norm else nn.BatchNorm2d(64)
 
         # self.deconv8 = nn.ConvTranspose2d(64, 32, 2, stride=2)
         self.deconv8 = nn.Conv2d(64, 32, 3, padding=p)
         self.conv9_1 = nn.Conv2d(64, 32, 3, padding=p)
         self.LReLU9_1 = nn.LeakyReLU(0.2, inplace=True)
-        self.bn9_1 = nn.BatchNorm2d(32)
+        if self.opt.use_norm == 1:
+            self.bn9_1 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
         self.conv9_2 = nn.Conv2d(32, 32, 3, padding=p)
         self.LReLU9_2 = nn.LeakyReLU(0.2, inplace=True)
 
@@ -383,7 +398,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             if self.opt.tanh:
                 latent = self.tanh(latent)# Oddly does not apply to us
             if self.skip:
-            	output = latent + input*self.opt.skip# This is a breakthrough! The latent result is multplied with the low-ligt image to form the output.
+            	output = latent + input*self.opt.skip# This is a breakthrough! The latent result is added to the low-light image to form the output.
 
             
         output = pad_tensor_back(output, pad_left, pad_right, pad_top, pad_bottom)
@@ -418,6 +433,58 @@ class Vgg16(nn.Module):
         self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
         self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
+
+    def forward(self, X, opt):
+        h = F.relu(self.conv1_1(X), inplace=True)
+        h = F.relu(self.conv1_2(h), inplace=True)
+        # relu1_2 = h
+        h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        h = F.relu(self.conv2_1(h), inplace=True)
+        h = F.relu(self.conv2_2(h), inplace=True)
+        # relu2_2 = h
+        h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        h = F.relu(self.conv3_1(h), inplace=True)
+        h = F.relu(self.conv3_2(h), inplace=True)
+        h = F.relu(self.conv3_3(h), inplace=True)
+        # relu3_3 = h
+        if opt.vgg_choose != "no_maxpool":
+            h = F.max_pool2d(h, kernel_size=2, stride=2)
+
+        h = F.relu(self.conv4_1(h), inplace=True)
+        relu4_1 = h
+        h = F.relu(self.conv4_2(h), inplace=True)
+        relu4_2 = h
+        conv4_3 = self.conv4_3(h)
+        h = F.relu(conv4_3, inplace=True)
+        relu4_3 = h
+
+        if opt.vgg_choose != "no_maxpool":
+            if opt.vgg_maxpooling:
+                h = F.max_pool2d(h, kernel_size=2, stride=2)
+        
+        relu5_1 = F.relu(self.conv5_1(h), inplace=True)
+        relu5_2 = F.relu(self.conv5_2(relu5_1), inplace=True)
+        conv5_3 = self.conv5_3(relu5_2) 
+        h = F.relu(conv5_3, inplace=True)
+        relu5_3 = h
+        if opt.vgg_choose == "conv4_3":
+            return conv4_3
+        elif opt.vgg_choose == "relu4_2":
+            return relu4_2
+        elif opt.vgg_choose == "relu4_1":
+            return relu4_1
+        elif opt.vgg_choose == "relu4_3":
+            return relu4_3
+        elif opt.vgg_choose == "conv5_3":
+            return conv5_3
+        elif opt.vgg_choose == "relu5_1":
+            return relu5_1
+        elif opt.vgg_choose == "relu5_2":
+            return relu5_2
+        elif opt.vgg_choose == "relu5_3" or "maxpool":
+            return relu5_3
 
 		
 def vgg_preprocess(batch, opt):
