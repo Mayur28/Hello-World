@@ -52,11 +52,6 @@ To Do List
 
 
 Tomorrow To Do List:
-- Fix CV thoroughly, Question 4, I did the histograms for the GS and HSV image and commented on the but for the mean and variance, are we expected to work with the grayscale images or what.
-- Find out question 3.22
-- Find out about the ROC curve ( its the odd threshold messing things up)
-- Can I use the built-in PDF generator?
-
 - Start finding out from ___(Wesley) how to configure the cluster for the research.
 
 - Confirm the story of switching the labels in backward_G!
@@ -71,7 +66,7 @@ Tomorrow To Do List:
 - Check what is going on in backward_G as to how the  loss_G_A is computed (why are they switched?)
 - Where are acknowledging that skip connections are used, but it doesnt seem as if we are actually including any information in the attention modules(<-- what EGAN calls it)
 - Check what is the purpose of the latent result
-- I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate.
+- I dont see where is the vgg forward function called? In the Perceptual loss class, I see that we are using the vgg network but I dont see where we explicitly forward propagate. We dont, but investigate how is a result produced if we do not forward propagate
 - Get drive pictures to work without visdom! Thereafter, check if the implementation works with the new version of pyTorch
 - For some reason, we dont ever set the discriminators to trainable?
 - Consider removing the pool stuff in the backward pass of the discriminator

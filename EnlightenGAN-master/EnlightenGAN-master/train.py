@@ -27,20 +27,20 @@ total_steps = 0
 for epoch in range(1, opt.niter + opt.niter_decay + 1):
     epoch_start_time = time.time()
     for i, data in enumerate(dataset):# This represents the chunked dataset! it will process each batch accordingly. GUARANTEED!--> Apparently restarts the dataloader iterator on each epoch. I DEF. NEED THIS!
-		# Each padd, the dataset dataloader is called which takes a slice of what is retrieved from Unaligned_Dataset, noting that recieving from Unaligned_dataset in each pass is in the desired dictionary format! This means that data is in mini-dictionary form!
+		# Each pass, the dataset dataloader is called which takes a slice of what is retrieved from Unaligned_Dataset, noting that recieving from Unaligned_dataset in each pass is in the desired dictionary format! This means that data is in mini-dictionary form!
         iter_start_time = time.time()
         total_steps += opt.batchSize
         epoch_iter = total_steps - dataset_size * (epoch - 1)
         model.set_input(data) #Remember at this stage, data is the batch 'dataset' in dictionary format. It slots the data into the correct variables self.inputA,etc to easily perform propagation operations
         model.optimize_parameters(epoch) # This is understood (the idea), still need to go deeper (into the actual functions that make it up)
 
-        #if total_steps % opt.display_freq == 0:
-        #    visualizer.display_current_results(model.get_current_visuals(), epoch)
+        if total_steps % opt.display_freq == 0:
+            visualizer.display_current_results(model.get_current_visuals(), epoch)
 
         if total_steps % opt.print_freq == 0:
             errors = model.get_current_errors(epoch)
             t = (time.time() - iter_start_time) / opt.batchSize
-            #visualizer.print_current_errors(epoch, epoch_iter, errors, t)
+            visualizer.print_current_errors(epoch, epoch_iter, errors, t)
             #if opt.display_id > 0:
             #    visualizer.plot_current_errors(epoch, float(epoch_iter)/dataset_size, opt, errors)
 
