@@ -53,14 +53,15 @@ To Do List
 
 Tomorrow To Do List:
 - Fix CV thoroughly, Question 4, I did the histograms for the GS and HSV image and commented on the but for the mean and variance, are we expected to work with the grayscale images or what.
-Find out question 3.22
-Find out about the ROC curve ( its the odd threshold messing things up)
+- Find out question 3.22
+- Find out about the ROC curve ( its the odd threshold messing things up)
+- Can I use the built-in PDF generator?
+
 - Start finding out from ___(Wesley) how to configure the cluster for the research.
 
 - Confirm the story of switching the labels in backward_G!
 - Go through opt and filter out all the useless parameters
 
-- Investigate this statement: Remove the redundant down sample in the generator
 - Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
 - Confirm the switching of labels in the backward_G function
 - There are 2 pad_tensor functions, remove accordingly!

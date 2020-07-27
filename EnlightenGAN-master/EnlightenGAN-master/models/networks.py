@@ -88,7 +88,7 @@ def define_G(norm='batch', gpu_ids=[], skip=False, opt=None):
     
     if len(gpu_ids) > 0:
         netG.cuda(device=gpu_ids[0])# jackpot! We see that the model is loaded to the GPU
-        #netG = torch.nn.DataParallel(netG, gpu_ids)# We only need this when we have more than one GPU
+        netG = torch.nn.DataParallel(netG, gpu_ids)# We only need this when we have more than one GPU
     netG.apply(weights_init)# The weight initialization
     return netG
 
@@ -105,7 +105,7 @@ def define_D(n_layers_D=3, norm='batch', gpu_ids=[]):
     
     if use_gpu:
         netD.cuda(device=gpu_ids[0]) # Jackpot, we are loading the model to the GPU
-        #netD = torch.nn.DataParallel(netD, gpu_ids)# Split the input across all the GPU's (if applicable)
+        netD = torch.nn.DataParallel(netD, gpu_ids)# Split the input across all the GPU's (if applicable)
     netD.apply(weights_init)
     return netD
 
@@ -513,16 +513,17 @@ def load_vgg16(model_dir, gpu_ids):
     """ Use the model from https://github.com/abhiskk/fast-neural-style/blob/master/neural_style/utils.py """
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
-    if not os.path.exists(os.path.join(model_dir, 'vgg16.weight')):
-        if not os.path.exists(os.path.join(model_dir, 'vgg16.t7')):
-            os.system('wget https://www.dropbox.com/s/76l3rt4kyi3s8x7/vgg16.t7?dl=1 -O ' + os.path.join(model_dir, 'vgg16.t7'))
-        vgglua = load_lua(os.path.join(model_dir, 'vgg16.t7'))
-        vgg = Vgg16()
-        for (src, dst) in zip(vgglua.parameters()[0], vgg.parameters()):
-            dst.data[:] = src
-        torch.save(vgg.state_dict(), os.path.join(model_dir, 'vgg16.weight'))
+    # if not os.path.exists(os.path.join(model_dir, 'vgg16.weight')):
+    #     if not os.path.exists(os.path.join(model_dir, 'vgg16.t7')):
+    #         os.system('wget https://www.dropbox.com/s/76l3rt4kyi3s8x7/vgg16.t7?dl=1 -O ' + os.path.join(model_dir, 'vgg16.t7'))
+    #     vgglua = load_lua(os.path.join(model_dir, 'vgg16.t7'))
+    #     vgg = Vgg16()
+    #     for (src, dst) in zip(vgglua.parameters()[0], vgg.parameters()):
+    #         dst.data[:] = src
+    #     torch.save(vgg.state_dict(), os.path.join(model_dir, 'vgg16.weight'))
     vgg = Vgg16()
-    vgg.cuda(device=gpu_ids[0]) 
+    # vgg.cuda()
+    vgg.cuda(device=gpu_ids[0])
     vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))
     vgg = torch.nn.DataParallel(vgg, gpu_ids)
     return vgg
