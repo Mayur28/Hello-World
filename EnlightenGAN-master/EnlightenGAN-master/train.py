@@ -20,7 +20,7 @@ print('#training images = %d' % dataset_size)
 model = SingleModel()
 model.initialize(opt)
 
-visualizer = Visualizer(opt)
+#visualizer = Visualizer(opt)
 
 total_steps = 0
 # Below is the big deal!!! range(1,100+100+1)# the lr decays for last 100 epochs
@@ -34,15 +34,15 @@ for epoch in range(1, opt.niter + opt.niter_decay + 1):
         model.set_input(data) #Remember at this stage, data is the batch 'dataset' in dictionary format. It slots the data into the correct variables self.inputA,etc to easily perform propagation operations
         model.optimize_parameters(epoch) # This is understood (the idea), still need to go deeper (into the actual functions that make it up)
 
-        if total_steps % opt.display_freq == 0:
-            visualizer.display_current_results(model.get_current_visuals(), epoch)
+        #if total_steps % opt.display_freq == 0:
+        #    visualizer.display_current_results(model.get_current_visuals(), epoch)
 
         if total_steps % opt.print_freq == 0:
             errors = model.get_current_errors(epoch)
             t = (time.time() - iter_start_time) / opt.batchSize
-            visualizer.print_current_errors(epoch, epoch_iter, errors, t)
-            if opt.display_id > 0:
-                visualizer.plot_current_errors(epoch, float(epoch_iter)/dataset_size, opt, errors)
+            #visualizer.print_current_errors(epoch, epoch_iter, errors, t)
+            #if opt.display_id > 0:
+            #    visualizer.plot_current_errors(epoch, float(epoch_iter)/dataset_size, opt, errors)
 
         if total_steps % opt.save_latest_freq == 0:
             print('saving the latest model (epoch %d, total_steps %d)' %
