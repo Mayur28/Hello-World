@@ -419,60 +419,7 @@ class Vgg16(nn.Module):
         self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
         self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1)
 
-    def forward(self, X, opt):
-        h = F.relu(self.conv1_1(X), inplace=True)
-        h = F.relu(self.conv1_2(h), inplace=True)
-        # relu1_2 = h
-        h = F.max_pool2d(h, kernel_size=2, stride=2)
-
-        h = F.relu(self.conv2_1(h), inplace=True)
-        h = F.relu(self.conv2_2(h), inplace=True)
-        # relu2_2 = h
-        h = F.max_pool2d(h, kernel_size=2, stride=2)
-
-        h = F.relu(self.conv3_1(h), inplace=True)
-        h = F.relu(self.conv3_2(h), inplace=True)
-        h = F.relu(self.conv3_3(h), inplace=True)
-        # relu3_3 = h
-        if opt.vgg_choose != "no_maxpool":
-            h = F.max_pool2d(h, kernel_size=2, stride=2)
-
-        h = F.relu(self.conv4_1(h), inplace=True)
-        relu4_1 = h
-        h = F.relu(self.conv4_2(h), inplace=True)
-        relu4_2 = h
-        conv4_3 = self.conv4_3(h)
-        h = F.relu(conv4_3, inplace=True)
-        relu4_3 = h
-
-        if opt.vgg_choose != "no_maxpool":
-            if opt.vgg_maxpooling:
-                h = F.max_pool2d(h, kernel_size=2, stride=2)
-
-        relu5_1 = F.relu(self.conv5_1(h), inplace=True)
-        relu5_2 = F.relu(self.conv5_2(relu5_1), inplace=True)
-        conv5_3 = self.conv5_3(relu5_2)
-        h = F.relu(conv5_3, inplace=True)
-        relu5_3 = h
-        if opt.vgg_choose == "conv4_3":
-            return conv4_3
-        elif opt.vgg_choose == "relu4_2":
-            return relu4_2
-        elif opt.vgg_choose == "relu4_1":
-            return relu4_1
-        elif opt.vgg_choose == "relu4_3":
-            return relu4_3
-        elif opt.vgg_choose == "conv5_3":
-            return conv5_3
-        elif opt.vgg_choose == "relu5_1":
-            return relu5_1
-        elif opt.vgg_choose == "relu5_2":
-            return relu5_2
-        elif opt.vgg_choose == "relu5_3" or "maxpool":
-            return relu5_3
-
-
-
+		
 def vgg_preprocess(batch, opt):
     tensortype = type(batch.data)
     (r, g, b) = torch.chunk(batch, 3, dim = 1)
@@ -523,6 +470,6 @@ def load_vgg16(model_dir, gpu_ids):
     vgg = Vgg16()
     # vgg.cuda()
     vgg.cuda(device=gpu_ids[0])
-    vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))
+    vgg.load_state_dict(torch.load(os.path.join(model_dir, 'vgg16.weight')))# Adding the weights to the model
     vgg = torch.nn.DataParallel(vgg, gpu_ids)
     return vgg

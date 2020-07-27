@@ -64,12 +64,10 @@ Tomorrow To Do List:
 
 - Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
 - Confirm the switching of labels in the backward_G function
-- There are 2 pad_tensor functions, remove accordingly!
 - It appears that the output is formed by multiplying the latent image with the low-light image. (Verify this!)
 - READ ENLIGHTEN
-- For some reason, I've added sigmoid on my own? Investigate
-- I NEED TO GO THROUGHT THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY!
-- FILTER OUT THE NOTES AND GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
+- I NEED TO GO THROUGH THE OPTIMIZE PARAMETERS FUNCTION ( AND THE SUB-FUNCTION) EXTREMELY THOROUGHLY!
+-  GET MY FINAL VERSION OF THE CODE READY (WITH ALL THE NECESSARY AMENDMENTS PERFORMED!!!)
 - Check what is going on in backward_G as to how the  loss_G_A is computed (why are they switched?)
 - Where are acknowledging that skip connections are used, but it doesnt seem as if we are actually including any information in the attention modules(<-- what EGAN calls it)
 - Check what is the purpose of the latent result
@@ -101,3 +99,25 @@ Notes for the Report:
 - (Outcome pending) Find a way to do erosion and dilation to the attention map. Try doing these operations before adding to tensor but the noise removal will probably be expensive.
 - When writing the report, describe how the data is pre-processed!
 - In my write-up make sure I mention that Im using LSGAN loss and explain it. In the discriminator, instead of just being right or wrong, it tells how right or wrong we are.
+
+
+
+
+
+
+
+
+
+
+
+
+Why the code is optimal
+Do for all the graph Just do it all literally
+Make it as simple as possible.
+Do like a robot.
+Just do it plain and simple and then submit.
+Dont forget the y=x line for the ROC curve(is it really necessary).
+SIMPLE AS POSSIBLE(ELEGANT)
+Check how to plot the probabilistic map thing!
+POLISH THE NOTEBOOK AND SUBMISSION THAT SUBMIT(BEFORE 12 TOMORROW!)
+Mean should go towards the median and the variance should increase by a lot
