@@ -10,6 +10,7 @@ import PIL
 from pdb import set_trace as st
 
 def pad_tensor(input):
+	print("I am in unaligned_dataset")
     
     height_org, width_org = input.shape[2], input.shape[3]
     divide = 16

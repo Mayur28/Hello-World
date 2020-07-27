@@ -13,7 +13,7 @@ from lib.nn import SynchronizedBatchNorm2d as SynBN2d
 ###############################################################################
 
 def pad_tensor(input):# If I recall correctly, it is(batch number, depth, fineSize,fineSize)
-
+	print("I am in networks")
     height_org, width_org = input.shape[2], input.shape[3]
     divide = 16
 

@@ -20,6 +20,7 @@ When I want to see the latent stuff, the attention map and the patchs, uncomment
 - Mask- Shadow GAN has it like original paper (opposite to EGAN) : They put Norm. before Relu????
 - Mask-Shadow GAN's 2 generators are identical except for 1 line where we need to account for the mask being concatenated with the input RGB image
 - The LSGAN can be implemented by using the target values of 1.0 for real and 0.0 for fake images and optimizing the model using the mean squared error (MSE) loss function, e.g. L2 loss. The output layer of the discriminator model must be a linear activation function.
+- Check if there is a resize function in single_model.py ( There isn't in the entire project. Note that looking at the base_dataset, it accepts torch.utils.data which is built-in and explicitly specifies that egt_im and len need to be overwritten). the 'resize_' function is a built-in tensor function.
 
 
 
@@ -51,11 +52,14 @@ To Do List
 
 
 Tomorrow To Do List:
-- Fix CV thoroughly, it's just the probability value stuff, the ROC and my other questions.
+- Fix CV thoroughly, Question 4, I did the histograms for the GS and HSV image and commented on the but for the mean and variance, are we expected to work with the grayscale images or what.
+Find out question 3.22
+Find out about the ROC curve ( its the odd threshold messing things up)
+- Start finding out from ___(Wesley) how to configure the cluster for the research.
+
 - Confirm the story of switching the labels in backward_G!
-- Search and remove fcn stuff
 - Go through opt and filter out all the useless parameters
-- Check if there is a resize function in single_model.py
+
 - Investigate this statement: Remove the redundant down sample in the generator
 - Look into the main functions (the arch. of the networks as well as how they forward and back propagate)
 - Confirm the switching of labels in the backward_G function
