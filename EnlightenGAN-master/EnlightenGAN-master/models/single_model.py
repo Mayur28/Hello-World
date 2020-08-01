@@ -307,7 +307,7 @@ class SingleModel(BaseModel):
         fake_B = util.tensor2im(self.fake_B.data)
         real_B = util.tensor2im(self.real_B.data)
         if self.opt.skip > 0:
-            latent_real_A = util.tensor2im(self.latent_real_A.data)# This is raw/ unchanged
+            latent_real_A = util.tensor2im(self.latent_real_A.data)
             latent_show = util.latent2im(self.latent_real_A.data)
             if self.opt.patchD:
                 fake_patch = util.tensor2im(self.fake_patch.data)

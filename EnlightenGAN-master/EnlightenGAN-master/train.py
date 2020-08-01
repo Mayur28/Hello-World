@@ -20,7 +20,7 @@ print('#training images = %d' % dataset_size)
 model = SingleModel()
 model.initialize(opt)
 
-visualizer = Visualizer(opt)
+#visualizer = Visualizer(opt)
 
 total_steps = 0
 # Below is the big deal!!! range(1,100+100+1)# the lr decays for last 100 epochs
