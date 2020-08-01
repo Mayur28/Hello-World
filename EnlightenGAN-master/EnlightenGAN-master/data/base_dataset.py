@@ -24,10 +24,4 @@ def get_transform(opt):
                                             (0.5, 0.5, 0.5))]# specifying mean=std=0.5 which normalizes the images to [-1,1]
     return transforms.Compose(transform_list)
 
-def __scale_width(img, target_width):
-    ow, oh = img.size
-    if (ow == target_width):
-        return img
-    w = target_width
-    h = int(target_width * oh / ow)
-    return img.resize((w, h), Image.BICUBIC)
+

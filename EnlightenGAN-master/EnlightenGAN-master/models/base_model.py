@@ -16,27 +16,6 @@ class BaseModel():
     def set_input(self, input):
         self.input = input
 
-    def forward(self):
-        pass
-
-    # used in test time, no backprop
-    def test(self):
-        pass
-
-    def get_image_paths(self):
-        pass
-
-    def optimize_parameters(self):
-        pass
-
-    def get_current_visuals(self):
-        return self.input
-
-    def get_current_errors(self):
-        return {}
-
-    def save(self, label):
-        pass
 
     def save_network(self, network, network_label, epoch_label, gpu_ids):
         save_filename = '%s_net_%s.pth' % (epoch_label, network_label)
@@ -50,6 +29,3 @@ class BaseModel():
         save_filename = '%s_net_%s.pth' % (epoch_label, network_label)
         save_path = os.path.join(self.save_dir, save_filename)
         network.load_state_dict(torch.load(save_path))
-
-    def update_learning_rate():
-        pass
