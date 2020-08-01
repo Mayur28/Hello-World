@@ -216,8 +216,9 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             self.downsample_2 = nn.MaxPool2d(2)
             self.downsample_3 = nn.MaxPool2d(2)
             self.downsample_4 = nn.MaxPool2d(2)
-        else: #I'VE ADD THE IF STATEMENTS AGAIN SO THAT i CAN DECIDE WHETHER I WANT INSTANCE OR BATCH NORMALIZATION
-			      self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
+        else:
+            self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
+        self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
             self.bn1_1 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
