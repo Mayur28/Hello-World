@@ -216,8 +216,9 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             self.downsample_2 = nn.MaxPool2d(2)
             self.downsample_3 = nn.MaxPool2d(2)
             self.downsample_4 = nn.MaxPool2d(2)
-        else: #I'VE ADD THE IF STATEMENTS AGAIN SO THAT i CAN DECIDE WHETHER I WANT INSTANCE OR BATCH NORMALIZATION
-            self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
+        else:
+            self.conv1_1 = nn.Conv2d(3, 32, 3, padding=p)
+        self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
             self.bn1_1 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
@@ -239,9 +240,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.conv3_1 = nn.Conv2d(64, 128, 3, padding=p)
         self.LReLU3_1 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
-            self.bn3_1 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
+          self.bn3_1 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
         self.conv3_2 = nn.Conv2d(128, 128, 3, padding=p)
         self.LReLU3_2 = nn.LeakyReLU(0.2, inplace=True)
+  		  
         if self.opt.use_norm == 1:
             self.bn3_2 = SynBN2d(128) if self.opt.syn_norm else nn.BatchNorm2d(128)
         self.max_pool3 = nn.AvgPool2d(2) if self.opt.use_avgpool == 1 else nn.MaxPool2d(2)
@@ -264,8 +266,8 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.LReLU5_2 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
             self.bn5_2 = SynBN2d(512) if self.opt.syn_norm else nn.BatchNorm2d(512)
-        
-        #We are just setting variables, but where are we actually stating that they are part of the model? Right now, it seems I could be creating arbitrary models.
+		
+		#We are just setting variables, but where are we actually stating that they are part of the model? Right now, it seems I could be creating arbitrary models.
 
 
         #The bottleneck has been reached, we now enter the decoder. We need to now upsample to produce the sample.
@@ -273,8 +275,9 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.deconv5 = nn.Conv2d(512, 256, 3, padding=p)#This is apparently referred to as a bilinear upsampling layer.(According to the paper). This apparently gets rid of checkerboard effects
         self.conv6_1 = nn.Conv2d(512, 256, 3, padding=p)# Try to get an intuition of how the no. of filters,kernel_size and strides are configured to achieve different characteristics
         self.LReLU6_1 = nn.LeakyReLU(0.2, inplace=True)
-         if self.opt.use_norm == 1:
-            self.bn6_1 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
+ 		    
+        if self.opt.use_norm == 1:
+          self.bn6_1 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
         self.conv6_2 = nn.Conv2d(256, 256, 3, padding=p)
         self.LReLU6_2 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
@@ -313,7 +316,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
 
         self.conv10 = nn.Conv2d(32, 3, 1)# This apparently has something to do with producing the latent space.
         if self.opt.tanh:
-              self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
+	          self.tanh = nn.Tanh()# In the provided training conf., tanh is not used. But how do we ensure that the output is within an acceptable range?
 
     def forward(self, input, gray):
         flag = 0
@@ -323,10 +326,10 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             gray = avg(gray)
             flag = 1
             # Before Performing a forward pass on the tensor, we first pad the tensor containing the real (low-light) images
-            #If the dimensions of the images are perfectly divisible by 16, we dont pad.
-            # Otherwise, we pad the dimensions that are skew by the amount such that the dim. of the new padded version is divisible by 16.
-            #The pad_tensor function performs the padding (if necessary) and returns how much padding was applied to each side which makes it easier when removing the padding later.
-            
+			#If the dimensions of the images are perfectly divisible by 16, we dont pad.
+			# Otherwise, we pad the dimensions that are skew by the amount such that the dim. of the new padded version is divisible by 16.
+			#The pad_tensor function performs the padding (if necessary) and returns how much padding was applied to each side which makes it easier when removing the padding later.
+			
         input, pad_left, pad_right, pad_top, pad_bottom = pad_tensor(input)
         gray, pad_left, pad_right, pad_top, pad_bottom = pad_tensor(gray)
         if self.opt.self_attention:
@@ -338,8 +341,8 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             #print("Gray_3 size: %s" % str(gray_3.size()))
             #print("Gray_4 size: %s" % str(gray_4.size()))
             #print("Gray_5 size: %s" % str(gray_5.size()))
-            
-            # I want to display the stuff as it happens!
+			
+			# I want to display the stuff as it happens!
         if self.opt.use_norm == 1: # We use this
             if self.opt.self_attention:
                 x = self.bn1_1(self.LReLU1_1(self.conv1_1(torch.cat((input, gray), 1))))# Concatenate the input with the provided attention map  in the 1st dimension (not the same as 0)
@@ -363,9 +366,9 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             x = self.bn5_1(self.LReLU5_1(self.conv5_1(x)))
             x = x*gray_5 if self.opt.self_attention else x
             conv5 = self.bn5_2(self.LReLU5_2(self.conv5_2(x)))
-            
-            #Bottleneck has been reached - start upsampling
-            # Experiment here to see if bilinear upsampling really is this best option.
+			
+			#Bottleneck has been reached - start upsampling
+			# Experiment here to see if bilinear upsampling really is this best option.
             conv5 = F.upsample(conv5, scale_factor=2, mode='bilinear')
             conv4 = conv4*gray_4 if self.opt.self_attention else conv4 #This is where we multiply the scaled attention map with upsampled result( at the current stage)
             up6 = torch.cat([self.deconv5(conv5), conv4], 1)
@@ -398,7 +401,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             if self.opt.tanh:
                 latent = self.tanh(latent)# Oddly does not apply to us
             if self.skip:
-                output = latent + input*self.opt.skip# This is a breakthrough! The latent result is added to the low-light image to form the output.
+            	output = latent + input*self.opt.skip# This is a breakthrough! The latent result is added to the low-light image to form the output.
 
             
         output = pad_tensor_back(output, pad_left, pad_right, pad_top, pad_bottom)
@@ -486,7 +489,7 @@ class Vgg16(nn.Module):
         elif opt.vgg_choose == "relu5_3" or "maxpool":
             return relu5_3
 
-        
+		
 def vgg_preprocess(batch, opt):
     tensortype = type(batch.data)
     (r, g, b) = torch.chunk(batch, 3, dim = 1)
@@ -505,8 +508,8 @@ class PerceptualLoss(nn.Module):
         super(PerceptualLoss, self).__init__()
         self.opt = opt
         self.instancenorm = nn.InstanceNorm2d(512, affine=False) #512 is the number of features
-        #They mention this Instance normalization in the paper to stabilize training
-        
+		#They mention this Instance normalization in the paper to stabilize training
+		
 
     def compute_vgg_loss(self, vgg, img, target):
       #print("Im in compute_vgg_loss: Size of vgg (fake_B) %s" % vgg.size())# Our enhanced image
