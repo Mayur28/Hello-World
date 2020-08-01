@@ -216,7 +216,8 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
             self.downsample_2 = nn.MaxPool2d(2)
             self.downsample_3 = nn.MaxPool2d(2)
             self.downsample_4 = nn.MaxPool2d(2)
-        self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
+        else: #I'VE ADD THE IF STATEMENTS AGAIN SO THAT i CAN DECIDE WHETHER I WANT INSTANCE OR BATCH NORMALIZATION
+            self.LReLU1_1 = nn.LeakyReLU(0.2, inplace=True)
         if self.opt.use_norm == 1:
             self.bn1_1 = SynBN2d(32) if self.opt.syn_norm else nn.BatchNorm2d(32)
         self.conv1_2 = nn.Conv2d(32, 32, 3, padding=p)
@@ -272,7 +273,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         self.deconv5 = nn.Conv2d(512, 256, 3, padding=p)#This is apparently referred to as a bilinear upsampling layer.(According to the paper). This apparently gets rid of checkerboard effects
         self.conv6_1 = nn.Conv2d(512, 256, 3, padding=p)# Try to get an intuition of how the no. of filters,kernel_size and strides are configured to achieve different characteristics
         self.LReLU6_1 = nn.LeakyReLU(0.2, inplace=True)
-        if self.opt.use_norm == 1:
+         if self.opt.use_norm == 1:
             self.bn6_1 = SynBN2d(256) if self.opt.syn_norm else nn.BatchNorm2d(256)
         self.conv6_2 = nn.Conv2d(256, 256, 3, padding=p)
         self.LReLU6_2 = nn.LeakyReLU(0.2, inplace=True)
