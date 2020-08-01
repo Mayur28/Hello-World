@@ -20,7 +20,7 @@ print('#training images = %d' % dataset_size)
 model = SingleModel()
 model.initialize(opt)
 
-#visualizer = Visualizer(opt)
+visualizer = Visualizer(opt)
 
 total_steps = 0
 # Below is the big deal!!! range(1,100+100+1)# the lr decays for last 100 epochs
@@ -41,8 +41,7 @@ for epoch in range(1, opt.niter + opt.niter_decay + 1):
             errors = model.get_current_errors(epoch)
             t = (time.time() - iter_start_time) / opt.batchSize
             visualizer.print_current_errors(epoch, epoch_iter, errors, t)
-            #if opt.display_id > 0:
-            #    visualizer.plot_current_errors(epoch, float(epoch_iter)/dataset_size, opt, errors)
+            
 
         if total_steps % opt.save_latest_freq == 0:
             print('saving the latest model (epoch %d, total_steps %d)' %
