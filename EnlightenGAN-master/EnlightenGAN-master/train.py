@@ -10,7 +10,7 @@ def get_config(config):
         return yaml.load(stream)
 
 opt = TrainOptions().parse()# Sort of tokenize all the options
-config = get_config(opt.config)# Calls GTA --> This is a special file from nvidia!
+config = get_config(opt.config)# Calls GTA --> This is a special file from nvidia!--> We dont seem to use this!
 data_loader = CreateDataLoader(opt)# The opt isnt really needed by we just need an instance of the class
 dataset = data_loader.load_data()# This is an implemented function!
 dataset_size = len(data_loader)#
