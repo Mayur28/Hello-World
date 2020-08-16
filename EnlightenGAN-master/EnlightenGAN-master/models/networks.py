@@ -102,11 +102,11 @@ def define_D(n_layers_D=3, norm='batch', gpu_ids=[]):
 
     netD = NoNormDiscriminator(n_layers_D, gpu_ids=gpu_ids)
     
-    if use_gpu:
-        netD.cuda(device=gpu_ids[0]) # Jackpot, we are loading the model to the GPU
-        netD = torch.nn.DataParallel(netD, gpu_ids)# Split the input across all the GPU's (if applicable)
-    netD.apply(weights_init)
-    return netD
+        if use_gpu:
+            netD.cuda(device=gpu_ids[0]) # Jackpot, we are loading the model to the GPU
+            netD = torch.nn.DataParallel(netD, gpu_ids)# Split the input across all the GPU's (if applicable)
+        netD.apply(weights_init)
+        return netD
 
 
 def print_network(net):
@@ -196,7 +196,7 @@ class NoNormDiscriminator(nn.Module):
         ]
 
         sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
-        #sequence += [nn.Sigmoid()]#<--- Needs to be remove if sticking to default setting!
+        #sequence += [nn.Sigmoid()]#<--- Needs to be remove if sticking to default setting! The removal concides with the definition of an LSGAN
 
         self.model = nn.Sequential(*sequence)
 
@@ -267,7 +267,7 @@ class Unet_resize_conv(nn.Module): # Verified by MLM that dropout is not used be
         if self.opt.use_norm == 1:
             self.bn5_2 = SynBN2d(512) if self.opt.syn_norm else nn.BatchNorm2d(512)
 		
-		#We are just setting variables, but where are we actually stating that they are part of the model? Right now, it seems I could be creating arbitrary models.
+
 
 
         #The bottleneck has been reached, we now enter the decoder. We need to now upsample to produce the sample.

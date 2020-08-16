@@ -28,7 +28,7 @@ class SingleModel(BaseModel):
         self.opt = opt
         self.input_A = self.Tensor(nb, opt.input_nc, size, size)#We are basically creating a tensor to store 16 low-light colour images with size fineSize x fineSize
         self.input_B = self.Tensor(nb, opt.output_nc, size, size) # Same as above but now for storing the normal-light images (NOT THE RESULT!)
-        self.input_img = self.Tensor(nb, opt.input_nc, size, size) # What this actually mean?
+        self.input_img = self.Tensor(nb, opt.input_nc, size, size)
         self.input_A_gray = self.Tensor(nb, 1, size, size) # this is for the attention maps
 		
 		#Track the above carefully
@@ -36,7 +36,7 @@ class SingleModel(BaseModel):
         if opt.vgg > 0: # We are using this!
             self.vgg_loss = networks.PerceptualLoss(opt)# We just create the instance that defines an instance norm layer. We still need to place this into the image.
             self.vgg_loss.cuda()#--> moves the variable to the GPU
-            self.vgg = networks.load_vgg16("./model", self.gpu_ids) #Actually load the VGG model(THIS IS CRUCIAL!)... This is the weights that we had to manually add
+            self.vgg = networks.load_vgg16("./model", self.gpu_ids) #Actually load the VGG model
             self.vgg.eval() # We call eval() when some layers within the self.vgg network behave differently during training and testing... This will not be trained (Its frozen!)!
 			#The eval function is often used as a pair with the requires.grad or torch.no grad functions (which makse sense)
             for param in self.vgg.parameters():
@@ -189,7 +189,7 @@ class SingleModel(BaseModel):
             self.fake_patch_1 = []
             self.real_patch_1 = []
             self.input_patch_1 = []
-            w = self.real_A.size(3) # Remember, the tensors are represented as (N,C,W,H)
+            w = self.real_A.size(3) # Remember, the tensors are represented as (N,C,H,W)
             h = self.real_A.size(2)
             for i in range(self.opt.patchD_3):# We are basically saying that for each image, we are taking 5 random patches of the fake, real and input image.
                 w_offset_1 = random.randint(0, max(0, w - self.opt.patchSize - 1))# This is concrete
@@ -233,7 +233,7 @@ class SingleModel(BaseModel):
                 pred_fake_patch_1 = self.netD_P.forward(self.fake_patch_1[i])# This indexing makes sense
                 if self.opt.hybrid_loss:
                     loss_G_A += self.criterionGAN(pred_fake_patch_1, True)#JUST DOUBLE THIS SWITCHING STORY
-					#Note: We are accumulating the loss_G_A for the entire images as well as for the patches.
+					
             if not self.opt.D_P_times2:
                 self.loss_G_A += loss_G_A/float(self.opt.patchD_3 + 1)# We have this and are basically saying that the official loss_G_A (the one that is global) is equal to the average of the locally computed loss_G_A from above. The +1 is for discriminating the individual patch (on line 245).
 
